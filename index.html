@@ -298,19 +298,17 @@ function submitEOD() {
 
   updateAdmin();
 
-  if (SCRIPT_URL !== "YOUR_APPS_SCRIPT_URL_HERE") {
-    fetch(SCRIPT_URL, {
-      method:"POST", mode:"no-cors",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        name, date: new Date().toLocaleDateString("en-GB"),
-        gmailEmails:d.gmail, gmailViews:d.gviews,
-        outlookEmails:d.outlook, outlookViews:d.oviews,
-        meetings:d.mtg, followups:d.fu
-      })
-    });
-  }
-}
+fetch(SCRIPT_URL, {
+  method: "POST",
+  mode: "no-cors",
+  headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({
+    name, date: new Date().toLocaleDateString("en-GB"),
+    gmailEmails: d.gmail, gmailViews: d.gviews,
+    outlookEmails: d.outlook, outlookViews: d.oviews,
+    meetings: d.mtg, followups: d.fu
+  })
+});
 
 function teamTotal(members,field){ return members.reduce((a,m)=>a+(data[m]?data[m][field]:0),0); }
 function teamSub(members){ return members.filter(m=>data[m]).length; }
