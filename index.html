@@ -292,7 +292,7 @@ function submitEOD() {
   const formData = new FormData();
   formData.append("data", JSON.stringify({
     name,
-    date: new Date().toLocaleDateString("en-GB"),
+    date: new Date().toLocaleString("en-GB", {timeZone: "America/New_York"}).split(",")[0],
     gmailEmails:   d.gmail,
     gmailViews:    d.gviews,
     outlookEmails: d.outlook,
