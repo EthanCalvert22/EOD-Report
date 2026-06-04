@@ -244,13 +244,49 @@ function loadLeaderboard(){
   .catch(()=>{document.getElementById("lb-loading").textContent="Couldn't load. Tap refresh to retry.";});
 }
 function computeStats(bookings){
- const today=nyDDMM(),now=new Date();
- const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
- const weekStart=new Date(now);const day=(now.getDay()+6)%7;weekStart.setDate(now.getDate()-day);weekStart.setHours(0,0,0,0);
- function parse(d){const p=(""+d).split("/");return p.length===3?new Date(+p[2],+p[1]-1,+p[0]):null;}
- const per={};ALL.forEach(a=>per[a.name]={name:a.name,team:a.team,today:0,week:0,month:0,total:0});
- (bookings||[]).forEach(b=>{if(!per[b.name])return;per[b.name].total++;const dt=parse(b.date);if(!dt)return;if((""+b.date)===today)per[b.name].today++;if(dt>=weekStart)per[b.name].week++;if(dt>=monthStart)per[b.name].month++;});
- return Object.values(per);
+  const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const nowNY = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+
+  const monthStart = new Date(nowNY.getFullYear(), nowNY.getMonth(), 1);
+
+  const weekStart = new Date(nowNY);
+  const day = (weekStart.getDay() + 6) % 7; // Monday = 0
+  weekStart.setDate(weekStart.getDate() - day);
+  weekStart.setHours(0,0,0,0);
+
+  function parseKey(key){
+    if (!key || !/^\d{4}-\d{2}-\d{2}$/.test(String(key))) return null;
+    const [y, m, d] = key.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  const per = {};
+  ALL.forEach(a => {
+    per[a.name] = {
+      name: a.name,
+      team: a.team,
+      today: 0,
+      week: 0,
+      month: 0,
+      total: 0
+    };
+  });
+
+  (bookings || []).forEach(b => {
+    if (!per[b.name]) return;
+
+    per[b.name].total++;
+
+    const dt = parseKey(b.dateKey);
+    if (!dt) return;
+
+    if (b.dateKey === todayKey) per[b.name].today++;
+    if (dt >= weekStart) per[b.name].week++;
+    if (dt >= monthStart) per[b.name].month++;
+  });
+
+  return Object.values(per);
+}
 }
 function setPeriod(p,btn){lbPeriod=p;document.querySelectorAll("#lb-seg button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderLeaderboard();}
 function renderLeaderboard(){
