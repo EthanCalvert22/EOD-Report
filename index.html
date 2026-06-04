@@ -41,14 +41,12 @@ h1{font-size:26px;font-weight:700;margin-bottom:6px;}
 .banner{border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;font-size:14px;display:none;}
 .banner.ok{background:rgba(104,211,145,0.1);border:1px solid rgba(104,211,145,0.3);color:var(--green);display:block;}
 .banner.err{background:rgba(252,129,129,0.1);border:1px solid rgba(252,129,129,0.3);color:#FC8181;display:block;}
-/* metrics */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
 .metric{background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);padding:16px;}
 .metric .l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-family:var(--mono);margin-bottom:8px;}
 .metric .v{font-size:28px;font-weight:700;font-family:var(--mono);}
 .metric.acc .v{color:var(--accent);}
 .metric.grn .v{color:var(--green);}
-/* tables */
 table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px;}
 th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);font-family:var(--mono);}
 td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);font-family:var(--mono);}
@@ -57,8 +55,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 .sub-row td{background:rgba(43,108,176,0.14);color:var(--text);font-weight:600;}
 .total-row td{background:rgba(246,173,85,0.08);color:var(--accent);font-weight:700;}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;}
-.dot.done{background:var(--green);}.dot.pending{background:var(--text3);}
-/* leaderboard cool */
+.dot.done{background:var(--green);}
+.dot.pending{background:var(--text3);}
 .lb-hero{background:linear-gradient(135deg,rgba(43,108,176,0.25),rgba(13,27,42,0.1));border:1px solid var(--border2);border-radius:16px;padding:24px;margin-bottom:24px;}
 .podium{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;align-items:end;}
 .pod{border-radius:14px;padding:18px 12px;text-align:center;border:1px solid var(--border2);position:relative;overflow:hidden;}
@@ -84,7 +82,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 .refresh-btn{font-size:12px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:none;color:var(--text2);cursor:pointer;font-family:var(--mono);}
 .refresh-btn:hover{color:var(--text);background:var(--card2);}
 .rank-num{display:inline-block;width:24px;color:var(--text3);font-weight:700;}
-.rank-1{color:var(--gold);}.rank-2{color:var(--silver);}.rank-3{color:var(--bronze);}
+.rank-1{color:var(--gold);}
+.rank-2{color:var(--silver);}
+.rank-3{color:var(--bronze);}
 </style>
 </head>
 <body>
@@ -99,7 +99,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div class="date-badge" id="dateb"></div>
 </div>
 
-<!-- EOD -->
 <div class="view active" id="v-eod">
   <h1>End of Day Report</h1>
   <p class="sub">Pick your name, enter today's numbers, submit.</p>
@@ -120,7 +119,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   </div>
 </div>
 
-<!-- BOOKING -->
 <div class="view" id="v-booking">
   <h1>Log a Booking</h1>
   <p class="sub">Tap your name, enter who booked, and the date. Separate from your EOD.</p>
@@ -138,7 +136,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   </div>
 </div>
 
-<!-- LEADERBOARD -->
 <div class="view" id="v-leaderboard">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
     <div><h1>🏆 Leaderboard</h1><p class="sub">Bookings across the whole team — live.</p></div>
@@ -160,7 +157,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   </div>
 </div>
 
-<!-- ADMIN -->
 <div class="view" id="v-admin">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
     <div><h1>Admin Dashboard</h1><p class="sub">Today's EOD activity, live from the sheet.</p></div>
@@ -191,6 +187,7 @@ const STRUCTURE=[
  {team:"Email Leads",members:["Ernst","James","Reynald","Patrick","Rona","Francis","Jameson"]},
 ];
 const ALL=[];STRUCTURE.forEach(g=>g.members.forEach(m=>ALL.push({name:m,team:g.team})));
+
 function nyTodayISO(){return new Date().toLocaleString("en-CA",{timeZone:"America/New_York"}).split(",")[0];}
 function nyDDMM(){return new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",day:"2-digit",month:"2-digit",year:"numeric"});}
 document.getElementById("dateb").textContent=new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
@@ -200,27 +197,66 @@ function buildNames(containerId,onPick){
  STRUCTURE.forEach(g=>{
   const lab=document.createElement("div");lab.className="group-label";lab.textContent=g.team;c.appendChild(lab);
   const grid=document.createElement("div");grid.className="name-grid";
-  g.members.forEach(name=>{const b=document.createElement("button");b.className="name-chip";b.textContent=name;b.onclick=()=>onPick(name,b);grid.appendChild(b);});
+  g.members.forEach(name=>{
+    const b=document.createElement("button");
+    b.className="name-chip";
+    b.textContent=name;
+    b.onclick=()=>onPick(name,b);
+    grid.appendChild(b);
+  });
   c.appendChild(grid);
  });
 }
 
 /* EOD */
 let eodSel=null;
-buildNames("eod-names",(name,btn)=>{eodSel=name;document.querySelectorAll("#eod-names .name-chip").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected");document.getElementById("eod-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;document.getElementById("eod-names").style.display="none";document.getElementById("eod-form").style.display="block";});
-function backEOD(){document.getElementById("eod-form").style.display="none";document.getElementById("eod-names").style.display="block";eodSel=null;}
+buildNames("eod-names",(name,btn)=>{
+  eodSel=name;
+  document.querySelectorAll("#eod-names .name-chip").forEach(x=>x.classList.remove("selected"));
+  btn.classList.add("selected");
+  document.getElementById("eod-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
+  document.getElementById("eod-names").style.display="none";
+  document.getElementById("eod-form").style.display="block";
+});
+function backEOD(){
+  document.getElementById("eod-form").style.display="none";
+  document.getElementById("eod-names").style.display="block";
+  eodSel=null;
+}
 function submitEOD(){
  if(!eodSel)return;
- const fd=new FormData();fd.append("type","eod");
- fd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:+v("e-mtg"),followups:+v("e-fu")}));
+ const fd=new FormData();
+ fd.append("type","eod");
+ fd.append("data",JSON.stringify({
+   name:eodSel,
+   gmailEmails:+v("e-gmail"),
+   gmailViews:+v("e-gviews"),
+   outlookEmails:+v("e-outlook"),
+   outlookViews:+v("e-oviews"),
+   meetings:+v("e-mtg"),
+   followups:+v("e-fu")
+ }));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("eod-banner","ok","EOD logged for "+eodSel+". Select another name to continue.");backEOD();
+ banner("eod-banner","ok","EOD logged for "+eodSel+". Select another name to continue.");
+ backEOD();
 }
 
 /* BOOKING */
 let bkSel=null;
-buildNames("bk-names",(name,btn)=>{bkSel=name;document.querySelectorAll("#bk-names .name-chip").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected");document.getElementById("bk-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;document.getElementById("bk-names").style.display="none";document.getElementById("bk-form").style.display="block";document.getElementById("b-date").value=nyTodayISO();});
-function backBk(){document.getElementById("bk-form").style.display="none";document.getElementById("bk-names").style.display="block";bkSel=null;}
+buildNames("bk-names",(name,btn)=>{
+  bkSel=name;
+  document.querySelectorAll("#bk-names .name-chip").forEach(x=>x.classList.remove("selected"));
+  btn.classList.add("selected");
+  document.getElementById("bk-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
+  document.getElementById("bk-names").style.display="none";
+  document.getElementById("bk-form").style.display="block";
+  document.getElementById("b-date").value=nyTodayISO();
+});
+function backBk(){
+  document.getElementById("bk-form").style.display="none";
+  document.getElementById("bk-names").style.display="block";
+  bkSel=null;
+}
 function submitBooking(){
  if(!bkSel)return;
  const email=v("b-email").trim();
@@ -228,21 +264,37 @@ function submitBooking(){
  const p=v("b-date").split("-");
  const ddmmyyyy=p.length===3?(p[2]+"/"+p[1]+"/"+p[0]):nyDDMM();
  const team=ALL.find(x=>x.name===bkSel).team;
- const fd=new FormData();fd.append("type","booking");
- fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:ddmmyyyy}));
+ const fd=new FormData();
+ fd.append("type","booking");
+ fd.append("data",JSON.stringify({
+   name:bkSel,
+   team:team,
+   email:email,
+   company:v("b-company"),
+   date:ddmmyyyy
+ }));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");backBk();
+ banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");
+ backBk();
 }
 
 /* LEADERBOARD */
 let lbData=null,lbPeriod="month";
+
 function loadLeaderboard(){
  document.getElementById("lb-loading").style.display="block";
  document.getElementById("lb-content").style.display="none";
- fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now()).then(r=>r.json())
-  .then(rows=>{lbData=computeStats(rows);renderLeaderboard();})
-  .catch(()=>{document.getElementById("lb-loading").textContent="Couldn't load. Tap refresh to retry.";});
+ fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now())
+  .then(r=>r.json())
+  .then(rows=>{
+    lbData=computeStats(rows);
+    renderLeaderboard();
+  })
+  .catch(()=>{
+    document.getElementById("lb-loading").textContent="Couldn't load. Tap refresh to retry.";
+  });
 }
+
 function computeStats(bookings){
   const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
   const nowNY = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
@@ -250,65 +302,100 @@ function computeStats(bookings){
   const monthStart = new Date(nowNY.getFullYear(), nowNY.getMonth(), 1);
 
   const weekStart = new Date(nowNY);
-  const day = (weekStart.getDay() + 6) % 7; // Monday = 0
+  const day = (weekStart.getDay() + 6) % 7;
   weekStart.setDate(weekStart.getDate() - day);
   weekStart.setHours(0,0,0,0);
 
   function parseKey(key){
     if (!key || !/^\d{4}-\d{2}-\d{2}$/.test(String(key))) return null;
-    const [y, m, d] = key.split("-").map(Number);
-    return new Date(y, m - 1, d);
+    const parts = key.split("-").map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
   }
 
-  const per = {};
-  ALL.forEach(a => {
-    per[a.name] = {
-      name: a.name,
-      team: a.team,
-      today: 0,
-      week: 0,
-      month: 0,
-      total: 0
+  const per={};
+  ALL.forEach(a=>{
+    per[a.name]={
+      name:a.name,
+      team:a.team,
+      today:0,
+      week:0,
+      month:0,
+      total:0
     };
   });
 
-  (bookings || []).forEach(b => {
-    if (!per[b.name]) return;
-
+  (bookings||[]).forEach(b=>{
+    if(!per[b.name]) return;
     per[b.name].total++;
 
-    const dt = parseKey(b.dateKey);
-    if (!dt) return;
+    const dt=parseKey(b.dateKey);
+    if(!dt) return;
 
-    if (b.dateKey === todayKey) per[b.name].today++;
-    if (dt >= weekStart) per[b.name].week++;
-    if (dt >= monthStart) per[b.name].month++;
+    if(b.dateKey===todayKey) per[b.name].today++;
+    if(dt>=weekStart) per[b.name].week++;
+    if(dt>=monthStart) per[b.name].month++;
   });
 
   return Object.values(per);
 }
+
+function setPeriod(p,btn){
+  lbPeriod=p;
+  document.querySelectorAll("#lb-seg button").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+  renderLeaderboard();
 }
-function setPeriod(p,btn){lbPeriod=p;document.querySelectorAll("#lb-seg button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderLeaderboard();}
+
 function renderLeaderboard(){
  if(!lbData)return;
  const arr=lbData,P=lbPeriod;
  const byP=[...arr].sort((a,b)=>b[P]-a[P]);
  const byMonth=[...arr].sort((a,b)=>b.month-a.month);
- const pod=document.getElementById("lb-podium");pod.innerHTML="";
- [{cls:"silver",m:"🥈",i:1},{cls:"gold",m:"🥇",i:0},{cls:"bronze",m:"🥉",i:2}].forEach(o=>{const p=byMonth[o.i]||{name:"-",team:"",month:0};const d=document.createElement("div");d.className="pod "+o.cls;d.innerHTML='<div class="medal">'+o.m+'</div><div class="nm">'+p.name+'</div><div class="tm">'+(p.team||"")+'</div><div class="ct">'+p.month+' <span>this month</span></div>';pod.appendChild(d);});
+
+ const pod=document.getElementById("lb-podium");
+ pod.innerHTML="";
+ [{cls:"silver",m:"🥈",i:1},{cls:"gold",m:"🥇",i:0},{cls:"bronze",m:"🥉",i:2}].forEach(o=>{
+   const p=byMonth[o.i]||{name:"-",team:"",month:0};
+   const d=document.createElement("div");
+   d.className="pod "+o.cls;
+   d.innerHTML='<div class="medal">'+o.m+'</div><div class="nm">'+p.name+'</div><div class="tm">'+(p.team||"")+'</div><div class="ct">'+p.month+' <span>this month</span></div>';
+   pod.appendChild(d);
+ });
+
  const maxP=Math.max(1,...byP.map(x=>x[P]));
- const ind=document.getElementById("lb-ind");ind.innerHTML="";
- byP.forEach((p,i)=>{const tr=document.createElement("tr");const rc=i<3?(" rank-"+(i+1)):"";const pct=Math.round(p[P]/maxP*100);
-  tr.innerHTML='<td><span class="rank-num'+rc+'">'+(i+1)+'</span></td><td class="nm">'+p.name+'</td><td>'+p.team+'</td><td>'+p.today+'</td><td>'+p.week+'</td><td>'+p.month+'</td><td class="bar-cell"><div class="bar" style="width:'+pct+'%"></div><span class="bar-val"><b>'+p.total+'</b></span></td>';
-  ind.appendChild(tr);});
- const teams={};STRUCTURE.forEach(g=>teams[g.team]={team:g.team,today:0,week:0,month:0,total:0});
- arr.forEach(p=>{const t=teams[p.team];if(!t)return;t.today+=p.today;t.week+=p.week;t.month+=p.month;t.total+=p.total;});
+ const ind=document.getElementById("lb-ind");
+ ind.innerHTML="";
+ byP.forEach((p,i)=>{
+   const tr=document.createElement("tr");
+   const rc=i<3?(" rank-"+(i+1)):"";
+   const pct=Math.round(p[P]/maxP*100);
+   tr.innerHTML='<td><span class="rank-num'+rc+'">'+(i+1)+'</span></td><td class="nm">'+p.name+'</td><td>'+p.team+'</td><td>'+p.today+'</td><td>'+p.week+'</td><td>'+p.month+'</td><td class="bar-cell"><div class="bar" style="width:'+pct+'%"></div><span class="bar-val"><b>'+p.total+'</b></span></td>';
+   ind.appendChild(tr);
+ });
+
+ const teams={};
+ STRUCTURE.forEach(g=>teams[g.team]={team:g.team,today:0,week:0,month:0,total:0});
+ arr.forEach(p=>{
+   const t=teams[p.team];
+   if(!t)return;
+   t.today+=p.today;
+   t.week+=p.week;
+   t.month+=p.month;
+   t.total+=p.total;
+ });
+
  const tArr=Object.values(teams).sort((a,b)=>b[P]-a[P]);
  const maxT=Math.max(1,...tArr.map(x=>x[P]));
- const tb=document.getElementById("lb-team");tb.innerHTML="";
- tArr.forEach((t,i)=>{const tr=document.createElement("tr");const rc=i<3?(" rank-"+(i+1)):"";const pct=Math.round(t[P]/maxT*100);
-  tr.innerHTML='<td><span class="rank-num'+rc+'">'+(i+1)+'</span></td><td class="nm">'+t.team+'</td><td>'+t.today+'</td><td>'+t.week+'</td><td>'+t.month+'</td><td class="bar-cell"><div class="bar" style="width:'+pct+'%"></div><span class="bar-val"><b>'+t.total+'</b></span></td>';
-  tb.appendChild(tr);});
+ const tb=document.getElementById("lb-team");
+ tb.innerHTML="";
+ tArr.forEach((t,i)=>{
+   const tr=document.createElement("tr");
+   const rc=i<3?(" rank-"+(i+1)):"";
+   const pct=Math.round(t[P]/maxT*100);
+   tr.innerHTML='<td><span class="rank-num'+rc+'">'+(i+1)+'</span></td><td class="nm">'+t.team+'</td><td>'+t.today+'</td><td>'+t.week+'</td><td>'+t.month+'</td><td class="bar-cell"><div class="bar" style="width:'+pct+'%"></div><span class="bar-val"><b>'+t.total+'</b></span></td>';
+   tb.appendChild(tr);
+ });
+
  document.getElementById("lb-loading").style.display="none";
  document.getElementById("lb-content").style.display="block";
 }
@@ -317,27 +404,51 @@ function renderLeaderboard(){
 function loadAdmin(){
  document.getElementById("ad-loading").style.display="block";
  document.getElementById("ad-content").style.display="none";
- fetch(SCRIPT_URL+"?action=eodtoday&t="+Date.now()).then(r=>r.json())
+ fetch(SCRIPT_URL+"?action=eodtoday&t="+Date.now())
+  .then(r=>r.json())
   .then(rows=>renderAdmin(rows))
-  .catch(()=>{document.getElementById("ad-loading").textContent="Couldn't load. Tap refresh to retry.";});
+  .catch(()=>{
+    document.getElementById("ad-loading").textContent="Couldn't load. Tap refresh to retry.";
+  });
 }
+
 function renderAdmin(rows){
- const map={};(rows||[]).forEach(r=>{map[r.name]=r;});
+ const map={};
+ (rows||[]).forEach(r=>{map[r.name]=r;});
+
  let te=0,tm=0,tf=0,ts=0;
- const body=document.getElementById("ad-body");body.innerHTML="";
+ const body=document.getElementById("ad-body");
+ body.innerHTML="";
+
  STRUCTURE.forEach(g=>{
-  const gr=document.createElement("tr");gr.className="group-row";gr.innerHTML='<td colspan="6">'+g.team+'</td>';body.appendChild(gr);
+  const gr=document.createElement("tr");
+  gr.className="group-row";
+  gr.innerHTML='<td colspan="6">'+g.team+'</td>';
+  body.appendChild(gr);
+
   let ge=0,gm=0,gf=0,gs=0;
   g.members.forEach(name=>{
-   const d=map[name];const em=d?(+d.totalEmails):0,mt=d?(+d.meetings):0,fu=d?(+d.followups):0;
+   const d=map[name];
+   const em=d?(+d.totalEmails):0,mt=d?(+d.meetings):0,fu=d?(+d.followups):0;
    if(d){te+=em;tm+=mt;tf+=fu;ts++;ge+=em;gm+=mt;gf+=fu;gs++;}
    const tr=document.createElement("tr");
    tr.innerHTML='<td class="nm">'+name+'</td><td>'+g.team+'</td><td>'+(d?em:"—")+'</td><td>'+(d?mt:"—")+'</td><td>'+(d?fu:"—")+'</td><td><span class="dot '+(d?"done":"pending")+'"></span>'+(d?"Done":"Pending")+'</td>';
    body.appendChild(tr);
   });
-  if(gs>0){const sr=document.createElement("tr");sr.className="sub-row";sr.innerHTML='<td colspan="2">'+g.team+' subtotal</td><td>'+ge+'</td><td>'+gm+'</td><td>'+gf+'</td><td>'+gs+'/'+g.members.length+'</td>';body.appendChild(sr);}
+
+  if(gs>0){
+    const sr=document.createElement("tr");
+    sr.className="sub-row";
+    sr.innerHTML='<td colspan="2">'+g.team+' subtotal</td><td>'+ge+'</td><td>'+gm+'</td><td>'+gf+'</td><td>'+gs+'/'+g.members.length+'</td>';
+    body.appendChild(sr);
+  }
  });
- const tr=document.createElement("tr");tr.className="total-row";tr.innerHTML='<td colspan="2">Grand Total</td><td>'+te+'</td><td>'+tm+'</td><td>'+tf+'</td><td>'+ts+'/'+ALL.length+'</td>';body.appendChild(tr);
+
+ const tr=document.createElement("tr");
+ tr.className="total-row";
+ tr.innerHTML='<td colspan="2">Grand Total</td><td>'+te+'</td><td>'+tm+'</td><td>'+tf+'</td><td>'+ts+'/'+ALL.length+'</td>';
+ body.appendChild(tr);
+
  document.getElementById("ad-emails").textContent=te;
  document.getElementById("ad-mtg").textContent=tm;
  document.getElementById("ad-fu").textContent=tf;
@@ -348,8 +459,19 @@ function renderAdmin(rows){
 
 /* helpers */
 function v(id){return document.getElementById(id).value;}
-function banner(id,kind,msg){const b=document.getElementById(id);b.className="banner "+kind;b.textContent=msg;}
-function sv(id,btn){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav-tab").forEach(x=>x.classList.remove("active"));document.getElementById("v-"+id).classList.add("active");btn.classList.add("active");if(id==="leaderboard")loadLeaderboard();if(id==="admin")loadAdmin();}
+function banner(id,kind,msg){
+  const b=document.getElementById(id);
+  b.className="banner "+kind;
+  b.textContent=msg;
+}
+function sv(id,btn){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(x=>x.classList.remove("active"));
+  document.getElementById("v-"+id).classList.add("active");
+  btn.classList.add("active");
+  if(id==="leaderboard")loadLeaderboard();
+  if(id==="admin")loadAdmin();
+}
 </script>
 </body>
 </html>
