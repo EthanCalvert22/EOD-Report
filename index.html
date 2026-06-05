@@ -96,6 +96,12 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 .topchip .tsub{font-size:11px;color:var(--text3);font-family:var(--mono);}
 .topchip .tval{font-size:18px;font-weight:800;margin-left:auto;}
 .toggle-full{font-size:12px;color:var(--text2);background:none;border:1px solid var(--border2);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:var(--mono);margin-bottom:14px;}
+.bkrow{display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);font-size:13px;}
+.bkrow .bkdate{font-family:var(--mono);color:var(--text2);min-width:96px;}
+.bkrow .bkemail{color:var(--text);font-family:var(--mono);word-break:break-all;}
+.bkrow.dupe{border-color:rgba(246,173,85,0.4);}
+.bkrow .badge{margin-left:auto;font-size:10px;color:var(--accent);font-family:var(--mono);white-space:nowrap;}
+.bkempty{font-size:13px;color:var(--text3);padding:6px 0;}
 .toggle-full:hover{color:var(--text);background:var(--card2);}
 .loading{color:var(--text3);font-size:13px;padding:30px 0;text-align:center;}
 .refresh-btn{font-size:12px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;background:none;color:var(--text2);cursor:pointer;font-family:var(--mono);}
@@ -161,12 +167,17 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div id="bk-form" style="display:none">
     <div class="form-card"><h3 id="bk-person">—</h3>
       <div class="field-grid">
-        <div class="field full"><label>Booker email *</label><input type="email" id="b-email" placeholder="name@company.com"></div>
+        <div class="field full"><label>Booker email *</label><input type="email" id="b-email" placeholder="name@company.com" oninput="checkDupe()"><div id="b-dupe" style="font-size:12px;color:var(--accent);margin-top:4px;display:none;">⚠ You've already logged this email.</div></div>
         <div class="field"><label>Date booked for</label><input type="date" id="b-date"></div>
         <div class="field"><label>Company / notes</label><input type="text" id="b-company" placeholder="optional"></div>
       </div>
     </div>
     <div class="row"><button class="btn-primary" onclick="submitBooking()">Log Booking</button><button class="btn-secondary" onclick="backBk()">← Back</button></div>
+    <div id="bk-mine" style="margin-top:22px;">
+      <div class="sectlabel" id="bk-mine-label">Your logged bookings</div>
+      <div id="bk-mine-loading" class="loading" style="padding:12px 0;">Loading your bookings…</div>
+      <div id="bk-mine-list"></div>
+    </div>
   </div>
 </div>
 
@@ -287,6 +298,7 @@ function submitComment(){
 
 /* BOOKING */
 let bkSel=null;
+let myBookings=[]; // [{date, email}]
 buildNames("bk-names",(name,btn)=>{
   bkSel=name;
   document.querySelectorAll("#bk-names .name-chip").forEach(x=>x.classList.remove("selected"));
@@ -295,7 +307,39 @@ buildNames("bk-names",(name,btn)=>{
   document.getElementById("bk-names").style.display="none";
   document.getElementById("bk-form").style.display="block";
   document.getElementById("b-date").value=nyTodayISO();
+  document.getElementById("b-email").value="";
+  document.getElementById("b-company").value="";
+  document.getElementById("b-dupe").style.display="none";
+  loadMyBookings(name);
 })
+function loadMyBookings(name){
+  myBookings=[];
+  document.getElementById("bk-mine-loading").style.display="block";
+  document.getElementById("bk-mine-list").innerHTML="";
+  document.getElementById("bk-mine-label").textContent="Your logged bookings";
+  fetch(SCRIPT_URL+"?action=mybookings&name="+encodeURIComponent(name)+"&t="+Date.now())
+   .then(r=>r.json())
+   .then(rows=>{myBookings=(rows||[]).slice().reverse();renderMyBookings();})
+   .catch(()=>{document.getElementById("bk-mine-loading").textContent="Couldn't load your bookings.";});
+}
+function renderMyBookings(){
+  document.getElementById("bk-mine-loading").style.display="none";
+  const list=document.getElementById("bk-mine-list");
+  document.getElementById("bk-mine-label").textContent="Your logged bookings ("+myBookings.length+")";
+  if(!myBookings.length){list.innerHTML='<div class="bkempty">No bookings logged yet.</div>';return;}
+  list.innerHTML="";
+  myBookings.forEach(b=>{
+    const d=document.createElement("div");d.className="bkrow";
+    d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+'</span>';
+    list.appendChild(d);
+  });
+}
+function checkDupe(){
+  const email=document.getElementById("b-email").value.trim().toLowerCase();
+  const warn=document.getElementById("b-dupe");
+  if(email && myBookings.some(b=>(b.email||"").trim().toLowerCase()===email)){warn.style.display="block";}
+  else{warn.style.display="none";}
+}
 function backBk(){document.getElementById("bk-form").style.display="none";document.getElementById("bk-names").style.display="block";bkSel=null;}
 function submitBooking(){
  if(!bkSel)return;
@@ -307,7 +351,13 @@ function submitBooking(){
  const fd=new FormData();fd.append("type","booking");
  fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:isoDate}));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");backBk();
+ banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");
+ // Optimistically show it in their list and clear the inputs (stay on form to log more)
+ myBookings.unshift({date:isoDate,email:email});
+ renderMyBookings();
+ document.getElementById("b-email").value="";
+ document.getElementById("b-company").value="";
+ document.getElementById("b-dupe").style.display="none";
 }
 
 /* LEADERBOARD */
