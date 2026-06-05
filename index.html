@@ -301,11 +301,11 @@ function submitBooking(){
  if(!bkSel)return;
  const email=v("b-email").trim();
  if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
- const p=v("b-date").split("-");
- const ddmmyyyy=p.length===3?(p[2]+"/"+p[1]+"/"+p[0]):nyDDMM();
+ // Date picker already gives yyyy-mm-dd (unambiguous). Send it as-is; fall back to NY today.
+ const isoDate=/^\d{4}-\d{2}-\d{2}$/.test(v("b-date"))?v("b-date"):nyTodayISO();
  const team=ALL.find(x=>x.name===bkSel).team;
  const fd=new FormData();fd.append("type","booking");
- fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:ddmmyyyy}));
+ fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:isoDate}));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
  banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");backBk();
 }
