@@ -215,7 +215,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 
 <script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzQXWuwxNdQnc50UtCU1aD6MtaFXmtA9ENO6ZiZ44bHGrYktMbBTwlQE1tgf1uvbvhRsQ/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzn87qW6bxpQhSIXyp2uuO-IH0F-6JD-bKWzgdNIhDg4BZf5JVL44f0HqfErGorjrd4eQ/exec";
 const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie"];
 const STRUCTURE=[
  {team:"Joe",members:["Jesusa","Hervic","Alma","Mark"]},
@@ -320,13 +320,26 @@ function loadLeaderboard(){
   .catch(()=>{document.getElementById("lb-loading").textContent="Couldn't load. Tap refresh to retry.";});
 }
 function computeStats(bookings){
- const todayKey=nyTodayISO();
- const nowNY=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
- const monthStart=new Date(nowNY.getFullYear(),nowNY.getMonth(),1);
- const weekStart=new Date(nowNY);const day=(weekStart.getDay()+6)%7;weekStart.setDate(weekStart.getDate()-day);weekStart.setHours(0,0,0,0);
- function parseKey(key){if(!key||!/^\d{4}-\d{2}-\d{2}$/.test(String(key)))return null;const p=String(key).split("-").map(Number);return new Date(p[0],p[1]-1,p[2]);}
+ // All boundaries computed as NY-time yyyy-MM-dd strings — no Date objects from locale strings, so no timezone drift.
+ const todayKey=nyTodayISO();                         // e.g. "2026-06-05" in NY
+ const parts=todayKey.split("-").map(Number);
+ // Build a UTC date at noon to safely find the weekday for NY's today, then derive Monday.
+ const anchor=new Date(Date.UTC(parts[0],parts[1]-1,parts[2],12,0,0));
+ const dow=(anchor.getUTCDay()+6)%7;                  // 0=Mon … 6=Sun
+ const monday=new Date(anchor); monday.setUTCDate(anchor.getUTCDate()-dow);
+ const weekStartKey=monday.toISOString().slice(0,10); // Monday of NY's current week
+ const monthStartKey=todayKey.slice(0,8)+"01";        // first of NY's current month
+ function valid(k){return k&&/^\d{4}-\d{2}-\d{2}$/.test(String(k));}
  const per={};ALL.forEach(a=>per[a.name]={name:a.name,team:a.team,today:0,week:0,month:0,total:0});
- (bookings||[]).forEach(b=>{if(!per[b.name])return;per[b.name].total++;const dt=parseKey(b.dateKey);if(!dt)return;if(b.dateKey===todayKey)per[b.name].today++;if(dt>=weekStart)per[b.name].week++;if(dt>=monthStart)per[b.name].month++;});
+ (bookings||[]).forEach(b=>{
+   if(!per[b.name])return;
+   per[b.name].total++;
+   const k=b.dateKey;
+   if(!valid(k))return;
+   if(k===todayKey)per[b.name].today++;          // string equality
+   if(k>=weekStartKey&&k<=todayKey)per[b.name].week++;   // ISO strings sort chronologically
+   if(k>=monthStartKey&&k<=todayKey)per[b.name].month++;
+ });
  return Object.values(per);
 }
 function setPeriod(p,btn){lbPeriod=p;document.querySelectorAll("#lb-seg button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderLeaderboard();}
