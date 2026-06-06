@@ -131,6 +131,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div id="eod-panel" style="display:none">
     <div class="extra-opts" id="eod-extra"></div>
     <div id="eod-form">
+      <div id="eod-already" style="display:none;background:rgba(246,173,85,0.12);border:1px solid rgba(246,173,85,0.4);color:var(--accent);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;">✓ You've already submitted today. You can adjust your numbers below and tap <b>Update my submission</b> — this replaces your earlier entry rather than adding a new one.</div>
       <div class="form-card"><h3 id="eod-person">—</h3>
         <div class="field-grid">
           <div class="field"><label>Emails sent (Gmail)</label><input type="number" id="e-gmail" min="0" value="0"></div>
@@ -141,7 +142,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
           <div class="field"><label>Follow-ups sent</label><input type="number" id="e-fu" min="0" value="0"></div>
         </div>
       </div>
-      <div class="row"><button class="btn-primary" onclick="submitEOD()">Submit EOD</button><button class="btn-secondary" onclick="backEOD()">← Back</button></div>
+      <div class="row"><button class="btn-primary" id="eod-submit-btn" onclick="submitEOD()">Submit EOD</button><button class="btn-secondary" onclick="backEOD()">← Back</button></div>
     </div>
     <div id="eod-remove" style="display:none">
       <div class="form-card"><h3>Remove today's EOD</h3>
@@ -257,8 +258,10 @@ function buildNames(containerId,onPick){
 
 /* EOD */
 let eodSel=null;
+let eodAlready=false;
 buildNames("eod-names",(name,btn)=>{
   eodSel=name;
+  eodAlready=false;
   document.querySelectorAll("#eod-names .name-chip").forEach(x=>x.classList.remove("selected"));
   btn.classList.add("selected");
   document.getElementById("eod-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
@@ -268,8 +271,30 @@ buildNames("eod-names",(name,btn)=>{
   const extra=document.getElementById("eod-extra");extra.innerHTML="";
   const rm=document.createElement("button");rm.className="opt-btn";rm.textContent="Remove today's EOD";rm.onclick=showRemove;extra.appendChild(rm);
   if(SENIORS.includes(name)){const cm=document.createElement("button");cm.className="opt-btn senior";cm.textContent="★ Leave EOD comment";cm.onclick=showComment;extra.appendChild(cm);}
+  // reset form + status
+  ["e-gmail","e-gviews","e-outlook","e-oviews","e-mtg","e-fu"].forEach(id=>document.getElementById(id).value=0);
+  document.getElementById("eod-already").style.display="none";
+  document.getElementById("eod-submit-btn").textContent="Submit EOD";
   showEODForm();
+  checkAlreadySubmitted(name);
 })
+function checkAlreadySubmitted(name){
+  fetch(SCRIPT_URL+"?action=eodtoday&t="+Date.now())
+   .then(r=>r.json())
+   .then(data=>{
+     const rows=(data&&data.eod)?data.eod:(Array.isArray(data)?data:[]);
+     const mine=rows.find(r=>r.name===name);
+     if(mine){
+       eodAlready=true;
+       document.getElementById("eod-already").style.display="block";
+       document.getElementById("eod-submit-btn").textContent="Update my submission";
+       // Pre-fill what we know (admin read gives totalEmails/meetings/followups, not the gmail/outlook split)
+       document.getElementById("e-mtg").value=mine.meetings||0;
+       document.getElementById("e-fu").value=mine.followups||0;
+     }
+   })
+   .catch(()=>{});
+}
 function showEODForm(){document.getElementById("eod-form").style.display="block";document.getElementById("eod-remove").style.display="none";document.getElementById("eod-comment").style.display="none";}
 function showRemove(){document.getElementById("eod-form").style.display="none";document.getElementById("eod-remove").style.display="block";document.getElementById("eod-comment").style.display="none";}
 function showComment(){document.getElementById("eod-form").style.display="none";document.getElementById("eod-remove").style.display="none";document.getElementById("eod-comment").style.display="block";}
@@ -279,7 +304,7 @@ function submitEOD(){
  const fd=new FormData();fd.append("type","eod");
  fd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:+v("e-mtg"),followups:+v("e-fu")}));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("eod-banner","ok","EOD logged for "+eodSel+". Select another name to continue.");backEOD();
+ banner("eod-banner","ok",(eodAlready?"EOD updated for ":"EOD logged for ")+eodSel+". Select another name to continue.");backEOD();
 }
 function removeEOD(){
  if(!eodSel)return;
@@ -317,9 +342,14 @@ function loadMyBookings(name){
   document.getElementById("bk-mine-loading").style.display="block";
   document.getElementById("bk-mine-list").innerHTML="";
   document.getElementById("bk-mine-label").textContent="Your logged bookings";
-  fetch(SCRIPT_URL+"?action=mybookings&name="+encodeURIComponent(name)+"&t="+Date.now())
+  // Reuse the leaderboard endpoint (proven to work) and filter to this person client-side.
+  fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now())
    .then(r=>r.json())
-   .then(rows=>{myBookings=(rows||[]).slice().reverse();renderMyBookings();})
+   .then(rows=>{
+     myBookings=(rows||[]).filter(b=>b.name===name).map(b=>({date:b.dateKey||"",email:b.email||""}));
+     myBookings.reverse();
+     renderMyBookings();
+   })
    .catch(()=>{document.getElementById("bk-mine-loading").textContent="Couldn't load your bookings.";});
 }
 function renderMyBookings(){
