@@ -342,11 +342,11 @@ function loadMyBookings(name){
   document.getElementById("bk-mine-loading").style.display="block";
   document.getElementById("bk-mine-list").innerHTML="";
   document.getElementById("bk-mine-label").textContent="Your logged bookings";
-  // Reuse the leaderboard endpoint (proven to work) and filter to this person client-side.
-  fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now())
+  // Dedicated endpoint that returns date + email for one person, reading column E explicitly.
+  fetch(SCRIPT_URL+"?action=bookingemails&name="+encodeURIComponent(name)+"&t="+Date.now())
    .then(r=>r.json())
    .then(rows=>{
-     myBookings=(rows||[]).filter(b=>b.name===name).map(b=>({date:b.dateKey||"",email:b.email||""}));
+     myBookings=(rows||[]).map(b=>({date:b.date||"",email:b.email||""}));
      myBookings.reverse();
      renderMyBookings();
    })
