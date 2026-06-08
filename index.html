@@ -121,7 +121,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   </div>
   <div class="date-badge" id="dateb"></div>
 </div>
-
 <!-- EOD -->
 <div class="view active" id="v-eod">
   <h1>End of Day Report</h1>
@@ -134,9 +133,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div id="eod-already" style="display:none;background:rgba(246,173,85,0.12);border:1px solid rgba(246,173,85,0.4);color:var(--accent);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;">✓ You've already submitted today. You can adjust your numbers below and tap <b>Update my submission</b> — this replaces your earlier entry rather than adding a new one.</div>
       <div class="form-card"><h3 id="eod-person">—</h3>
         <div class="field-grid">
-          <div class="field"><label>Emails sent (Gmail)</label><input type="number" id="e-gmail" min="0" value="0"></div>
+          <div class="field"><label>Initial Outreaches sent (Gmail)</label><input type="number" id="e-gmail" min="0" value="0"></div>
           <div class="field"><label>Email views (Gmail)</label><input type="number" id="e-gviews" min="0" value="0"></div>
-          <div class="field"><label>Emails sent (Outlook)</label><input type="number" id="e-outlook" min="0" value="0"></div>
+          <div class="field"><label>Initial Outreaches sent (Outlook)</label><input type="number" id="e-outlook" min="0" value="0"></div>
           <div class="field"><label>Email views (Outlook)</label><input type="number" id="e-oviews" min="0" value="0"></div>
           <div class="field"><label>Meetings booked</label><input type="number" id="e-mtg" min="0" value="0"></div>
           <div class="field"><label>Follow-ups sent</label><input type="number" id="e-fu" min="0" value="0"></div>
@@ -158,7 +157,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
-
 <!-- BOOKING -->
 <div class="view" id="v-booking">
   <h1>Log a Booking</h1>
@@ -181,7 +179,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
-
 <!-- LEADERBOARD -->
 <div class="view" id="v-leaderboard">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
@@ -207,7 +204,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
-
 <!-- ADMIN -->
 <div class="view" id="v-admin">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
@@ -217,35 +213,40 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div id="ad-loading" class="loading">Loading…</div>
   <div id="ad-content" style="display:none">
     <div class="metrics">
-      <div class="metric acc"><div class="l">Total Emails</div><div class="v" id="ad-emails">0</div></div>
+      <div class="metric acc"><div class="l">Total Outreaches</div><div class="v" id="ad-emails">0</div></div>
       <div class="metric grn"><div class="l">Meetings (EOD)</div><div class="v" id="ad-mtg">0</div></div>
       <div class="metric"><div class="l">Follow-ups</div><div class="v" id="ad-fu">0</div></div>
       <div class="metric"><div class="l">Submitted</div><div class="v" id="ad-sub">0</div></div>
     </div>
-    <table><thead><tr><th>Name</th><th>Team</th><th>Emails</th><th>Meetings</th><th>Follow-ups</th><th>Status</th></tr></thead><tbody id="ad-body"></tbody></table>
+    <table><thead><tr><th>Name</th><th>Team</th><th>Outreaches</th><th>Meetings</th><th>Follow-ups</th><th>Status</th></tr></thead><tbody id="ad-body"></tbody></table>
   </div>
 </div>
-
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw9n1IzAnZO6J14EMmasZaJaDzNPG4cENzQhluMGEaMzl7FA7eEjYqyOZC9n2cVqc7Rng/exec";
-const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie"];
+const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie","Van","Ethan"];
 const STRUCTURE=[
- {team:"Joe",members:["Jesusa","Hervic","Alma","Mark"]},
- {team:"Saul",members:["Kim","Ivy","Charlot"]},
- {team:"Luke",members:["Van","Mylaine","Maru"]},
- {team:"Josh",members:["Jasper","Riri","Ros"]},
- {team:"Adam",members:["Sheena","Anthony","Pat"]},
- {team:"Seb",members:["Mae","Jade","Lovely","Ivony"]},
- {team:"LinkedIn Team",members:["Irene","Dominic","Allen Marie","Janrobin","Lorenz"]},
- {team:"Email Leads",members:["Ernst","James","Reynald","Patrick","Rona","Francis","Jameson"]},
+ {team:"Jesusa's team (Joe+)",   members:["Jesusa","Mark","Hervic","Alma","James Vaughn","Aiza","Michelle","Carina"]},
+ {team:"Mae's team (Seb+)",      members:["Mae","Jade","Lovely","Ivony","Tony","Manuel","Clarence Barbs","Brian"]},
+ {team:"Sheena's team (Adam+)",  members:["Sheena","Pat","Anthony","Ernst","Francis","King Lennard","Charmaine Booc","Rica Rei","Jose Bendano"]},
+ {team:"Allen Marie's team (LinkedIn+)", members:["Allen Marie","Irene","Dominic","Lorenz","Janrobin","Edgar","Jonnie","Molit"]},
+ {team:"Jasper's team (Josh+)",  members:["Jasper","Riri","Ros","Jameson","Jade Lumontad","Hazel Mae Jeminez","Elmar Estrada","Goretti Solonia"]},
+ {team:"Ethan's team (Saul+)",   members:["Ethan","Kim","Ivy","Charlot","Rey","Rona"]},
+ {team:"Van's team (Luke+)",     members:["Van","Maru","Mylaine","Hiroshi Goto"]},
 ];
 const ALL=[];STRUCTURE.forEach(g=>g.members.forEach(m=>ALL.push({name:m,team:g.team})));
-const TEAMCOLORS={Joe:"#888780",Saul:"#D85A30",Luke:"#378ADD",Josh:"#7F77DD",Adam:"#1D9E75",Seb:"#E8B923","LinkedIn Team":"#4299E1","Email Leads":"#D4537E"};
+const TEAMCOLORS={
+ "Jesusa's team (Joe+)":  "#888780",
+ "Mae's team (Seb+)":     "#E8B923",
+ "Sheena's team (Adam+)": "#1D9E75",
+ "Allen Marie's team (LinkedIn+)":"#4299E1",
+ "Jasper's team (Josh+)": "#7F77DD",
+ "Ethan's team (Saul+)":  "#D85A30",
+ "Van's team (Luke+)":    "#378ADD",
+};
 function nyTodayISO(){return new Date().toLocaleString("en-CA",{timeZone:"America/New_York"}).split(",")[0];}
 function nyDDMM(){return new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",day:"2-digit",month:"2-digit",year:"numeric"});}
 function initials(n){return n.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();}
 document.getElementById("dateb").textContent=new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-
 function buildNames(containerId,onPick){
  const c=document.getElementById(containerId);
  STRUCTURE.forEach(g=>{
@@ -255,7 +256,6 @@ function buildNames(containerId,onPick){
   c.appendChild(grid);
  });
 }
-
 /* EOD */
 let eodSel=null;
 let eodAlready=false;
@@ -288,7 +288,6 @@ function checkAlreadySubmitted(name){
        eodAlready=true;
        document.getElementById("eod-already").style.display="block";
        document.getElementById("eod-submit-btn").textContent="Update my submission";
-       // Pre-fill what we know (admin read gives totalEmails/meetings/followups, not the gmail/outlook split)
        document.getElementById("e-mtg").value=mine.meetings||0;
        document.getElementById("e-fu").value=mine.followups||0;
      }
@@ -320,10 +319,9 @@ function submitComment(){
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
  banner("eod-banner","ok","Comment submitted. Thanks "+eodSel+"!");backEOD();
 }
-
 /* BOOKING */
 let bkSel=null;
-let myBookings=[]; // [{date, email}]
+let myBookings=[];
 buildNames("bk-names",(name,btn)=>{
   bkSel=name;
   document.querySelectorAll("#bk-names .name-chip").forEach(x=>x.classList.remove("selected"));
@@ -342,7 +340,6 @@ function loadMyBookings(name){
   document.getElementById("bk-mine-loading").style.display="block";
   document.getElementById("bk-mine-list").innerHTML="";
   document.getElementById("bk-mine-label").textContent="Your logged bookings";
-  // Dedicated endpoint that returns date + email for one person, reading column E explicitly.
   fetch(SCRIPT_URL+"?action=bookingemails&name="+encodeURIComponent(name)+"&t="+Date.now())
    .then(r=>r.json())
    .then(rows=>{
@@ -375,21 +372,18 @@ function submitBooking(){
  if(!bkSel)return;
  const email=v("b-email").trim();
  if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
- // Date picker already gives yyyy-mm-dd (unambiguous). Send it as-is; fall back to NY today.
  const isoDate=/^\d{4}-\d{2}-\d{2}$/.test(v("b-date"))?v("b-date"):nyTodayISO();
  const team=ALL.find(x=>x.name===bkSel).team;
  const fd=new FormData();fd.append("type","booking");
  fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:isoDate}));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
  banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");
- // Optimistically show it in their list and clear the inputs (stay on form to log more)
  myBookings.unshift({date:isoDate,email:email});
  renderMyBookings();
  document.getElementById("b-email").value="";
  document.getElementById("b-company").value="";
  document.getElementById("b-dupe").style.display="none";
 }
-
 /* LEADERBOARD */
 let lbData=null,lbPeriod="month";
 function loadLeaderboard(){
@@ -400,15 +394,13 @@ function loadLeaderboard(){
   .catch(()=>{document.getElementById("lb-loading").textContent="Couldn't load. Tap refresh to retry.";});
 }
 function computeStats(bookings){
- // All boundaries computed as NY-time yyyy-MM-dd strings — no Date objects from locale strings, so no timezone drift.
- const todayKey=nyTodayISO();                         // e.g. "2026-06-05" in NY
+ const todayKey=nyTodayISO();
  const parts=todayKey.split("-").map(Number);
- // Build a UTC date at noon to safely find the weekday for NY's today, then derive Monday.
  const anchor=new Date(Date.UTC(parts[0],parts[1]-1,parts[2],12,0,0));
- const dow=(anchor.getUTCDay()+6)%7;                  // 0=Mon … 6=Sun
+ const dow=(anchor.getUTCDay()+6)%7;
  const monday=new Date(anchor); monday.setUTCDate(anchor.getUTCDate()-dow);
- const weekStartKey=monday.toISOString().slice(0,10); // Monday of NY's current week
- const monthStartKey=todayKey.slice(0,8)+"01";        // first of NY's current month
+ const weekStartKey=monday.toISOString().slice(0,10);
+ const monthStartKey=todayKey.slice(0,8)+"01";
  function valid(k){return k&&/^\d{4}-\d{2}-\d{2}$/.test(String(k));}
  const per={};ALL.forEach(a=>per[a.name]={name:a.name,team:a.team,today:0,week:0,month:0,total:0});
  (bookings||[]).forEach(b=>{
@@ -416,8 +408,8 @@ function computeStats(bookings){
    per[b.name].total++;
    const k=b.dateKey;
    if(!valid(k))return;
-   if(k===todayKey)per[b.name].today++;          // string equality
-   if(k>=weekStartKey&&k<=todayKey)per[b.name].week++;   // ISO strings sort chronologically
+   if(k===todayKey)per[b.name].today++;
+   if(k>=weekStartKey&&k<=todayKey)per[b.name].week++;
    if(k>=monthStartKey&&k<=todayKey)per[b.name].month++;
  });
  return Object.values(per);
@@ -442,7 +434,6 @@ function renderLeaderboard(){
  document.getElementById("lb-loading").style.display="none";
  document.getElementById("lb-content").style.display="block";
 }
-
 /* ADMIN */
 function loadAdmin(){
  document.getElementById("ad-loading").style.display="block";
@@ -477,7 +468,6 @@ function renderAdmin(data){
  document.getElementById("ad-loading").style.display="none";
  document.getElementById("ad-content").style.display="block";
 }
-
 /* helpers */
 function v(id){return document.getElementById(id).value;}
 function banner(id,kind,msg){const b=document.getElementById(id);b.className="banner "+kind;b.textContent=msg;}
