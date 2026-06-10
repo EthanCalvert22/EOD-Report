@@ -32,9 +32,9 @@ h1{font-size:26px;font-weight:700;margin-bottom:6px;}
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:4px;}
 .field.full{grid-column:1/3;}
 .field label{font-size:12px;color:var(--text2);}
-.field input,.field textarea{background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:14px;font-family:var(--mono);width:100%;}
+.field input,.field textarea,.field select{background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:14px;font-family:var(--mono);width:100%;}
 .field textarea{min-height:90px;resize:vertical;font-family:var(--sans);}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue-light);}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--blue-light);}
 .btn-primary{padding:11px 26px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);}
 .btn-primary:hover{background:var(--blue-light);}
 .btn-danger{padding:11px 22px;background:transparent;border:1px solid rgba(252,129,129,0.4);border-radius:8px;color:var(--red);font-size:14px;cursor:pointer;font-family:var(--sans);}
@@ -49,7 +49,6 @@ h1{font-size:26px;font-weight:700;margin-bottom:6px;}
 .opt-btn{padding:10px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text2);font-size:13px;cursor:pointer;}
 .opt-btn:hover{border-color:var(--blue-light);color:var(--text);}
 .opt-btn.senior{border-color:rgba(246,173,85,0.4);color:var(--accent);}
-/* metrics */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
 .metric{background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);padding:16px;}
 .metric .l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-family:var(--mono);margin-bottom:8px;}
@@ -64,11 +63,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 .total-row td{background:rgba(246,173,85,0.08);color:var(--accent);font-weight:700;}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;}
 .dot.done{background:var(--green);}.dot.pending{background:var(--text3);}
-/* leaderboard infographic */
 .podrow{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;align-items:end;margin-bottom:26px;}
 .podc{border-radius:16px;padding:18px 12px;text-align:center;border:1px solid var(--border2);}
-.podc .m{font-size:26px;}
-.podc .nm{font-weight:700;font-size:16px;margin-top:6px;}
+.podc .m{font-size:26px;}.podc .nm{font-weight:700;font-size:16px;margin-top:6px;}
 .podc .tm{font-size:11px;color:var(--text3);font-family:var(--mono);}
 .podc .big{font-size:30px;font-weight:800;margin-top:8px;}
 .podc.gold{background:linear-gradient(180deg,rgba(232,185,35,0.2),rgba(232,185,35,0.02));border-color:rgba(232,185,35,0.5);padding-top:30px;}
@@ -108,6 +105,24 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 .refresh-btn:hover{color:var(--text);background:var(--card2);}
 .rank-1{color:var(--gold);}.rank-2{color:var(--silver);}.rank-3{color:var(--bronze);}
 .rank-num{display:inline-block;width:24px;font-weight:700;color:var(--text3);}
+/* ---- Attendance ---- */
+.att-status-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+.att-status-btn{flex:1;min-width:90px;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;text-align:center;font-family:var(--sans);}
+.att-status-btn:hover{border-color:var(--blue-light);color:var(--text);}
+.att-status-btn.sel-present{background:rgba(104,211,145,0.15);border-color:var(--green);color:var(--green);}
+.att-status-btn.sel-vl{background:rgba(246,173,85,0.15);border-color:var(--accent);color:var(--accent);}
+.att-status-btn.sel-sl{background:rgba(127,119,221,0.15);border-color:#7F77DD;color:#7F77DD;}
+.att-already{background:rgba(246,173,85,0.1);border:1px solid rgba(246,173,85,0.3);color:var(--accent);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px;display:none;}
+.att-roll-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-bottom:24px;}
+.att-card{border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:3px;}
+.att-card.submitted{background:rgba(104,211,145,0.07);border:1px solid rgba(104,211,145,0.2);}
+.att-card.not-submitted{background:rgba(252,129,129,0.06);border:1px solid rgba(252,129,129,0.15);}
+.att-card .ac-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.att-card .ac-status{font-size:12px;font-weight:700;}
+.submitted .ac-status{color:var(--green);}
+.not-submitted .ac-status{color:var(--red);}
+.att-card .ac-time{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.att-stats{font-size:12px;color:var(--text3);font-family:var(--mono);font-weight:400;margin-left:8px;text-transform:none;letter-spacing:0;}
 </style>
 </head>
 <body>
@@ -116,11 +131,13 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="sv('eod',this)">Submit EOD</button>
     <button class="nav-tab" onclick="sv('booking',this)">Log Booking</button>
+    <button class="nav-tab" onclick="sv('attendance',this)">Attendance</button>
     <button class="nav-tab" onclick="sv('leaderboard',this)">Leaderboard</button>
     <button class="nav-tab" onclick="sv('admin',this)">Admin</button>
   </div>
   <div class="date-badge" id="dateb"></div>
 </div>
+
 <!-- EOD -->
 <div class="view active" id="v-eod">
   <h1>End of Day Report</h1>
@@ -157,6 +174,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
+
 <!-- BOOKING -->
 <div class="view" id="v-booking">
   <h1>Log a Booking</h1>
@@ -179,6 +197,94 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
+
+<!-- ATTENDANCE -->
+<div class="view" id="v-attendance">
+  <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+    <div>
+      <h1>Attendance</h1>
+      <p class="sub">Mark yourself present or log leave. Pick a future date to file VL/SL in advance.</p>
+    </div>
+    <button class="refresh-btn" onclick="loadRollCall()">↻ refresh</button>
+  </div>
+
+  <div class="banner" id="att-banner"></div>
+  <div class="att-already" id="att-already"></div>
+
+  <div class="form-card" style="margin-bottom:18px;">
+    <h3>Submit Attendance</h3>
+    <div class="field-grid">
+      <div class="field">
+        <label>Your name</label>
+        <select id="attName" onchange="onAttNameOrDateChange()">
+          <option value="">— Select your name —</option>
+          <optgroup label="Jesusa's Team">
+            <option>Jesusa</option><option>Mark</option><option>Hervic</option>
+            <option>Alma</option><option>James Vaughn</option><option>Aiza</option>
+            <option>Michelle</option><option>Carina</option>
+          </optgroup>
+          <optgroup label="Mae's Team">
+            <option>Mae</option><option>Jade</option><option>Lovely</option>
+            <option>Ivony</option><option>Tony</option><option>Manuel</option>
+            <option>Clarence Barbs</option>
+          </optgroup>
+          <optgroup label="Sheena's Team">
+            <option>Sheena</option><option>Pat</option><option>Anthony</option>
+            <option>Ernst</option><option>Francis</option><option>King Lennard</option>
+            <option>Rica Rei</option><option>Jose Bendano</option>
+          </optgroup>
+          <optgroup label="Allen Marie's Team">
+            <option>Allen Marie</option><option>Irene</option><option>Dominic</option>
+            <option>Lorenz</option><option>Janrobin</option><option>Edd</option>
+            <option>Jonnie</option><option>Molit</option>
+          </optgroup>
+          <optgroup label="Jasper's Team">
+            <option>Jasper</option><option>Riri</option><option>Ros</option>
+            <option>Jameson</option><option>Jade Lumontad</option>
+            <option>Hazel Mae Jeminez</option><option>Elmar Estrada</option><option>Goretti</option>
+          </optgroup>
+          <optgroup label="Ethan's Team">
+            <option>Ethan</option><option>Kim</option><option>Ivy</option>
+            <option>Charlot</option><option>Rey</option><option>Rona</option>
+            <option>Charmaine Booc</option>
+          </optgroup>
+          <optgroup label="Van's Team">
+            <option>Van</option><option>Maru</option><option>Mylaine</option>
+            <option>Hiro Wayne</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field">
+        <label>Date <span style="color:var(--text3);font-size:11px;">(today by default — pick future for VL/SL)</span></label>
+        <input type="date" id="attDate" onchange="onAttNameOrDateChange()">
+      </div>
+      <div class="field full">
+        <label>Status</label>
+        <div class="att-status-row">
+          <button class="att-status-btn" id="btn-Present" onclick="selectAttStatus('Present')">✅ Present</button>
+          <button class="att-status-btn" id="btn-VL"      onclick="selectAttStatus('VL')">✈️ VL</button>
+          <button class="att-status-btn" id="btn-SL"      onclick="selectAttStatus('SL')">🤒 SL</button>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Notes <span style="color:var(--text3);font-size:11px;">(optional)</span></label>
+        <input type="text" id="attNotes" placeholder="e.g. Returning 18 Jun">
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn-primary" id="attSubmitBtn" onclick="submitAttendance()">Submit Attendance</button>
+      <span id="attSubmitting" style="display:none;color:var(--text3);font-size:13px;font-family:var(--mono);">Submitting…</span>
+    </div>
+  </div>
+
+  <div class="sectlabel">
+    Today's Roll Call
+    <span class="att-stats" id="att-stats"></span>
+  </div>
+  <div id="att-roll-loading" class="loading" style="display:none;">Loading…</div>
+  <div class="att-roll-grid" id="att-roll-grid"></div>
+</div>
+
 <!-- LEADERBOARD -->
 <div class="view" id="v-leaderboard">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
@@ -204,6 +310,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
+
 <!-- ADMIN -->
 <div class="view" id="v-admin">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
@@ -221,12 +328,13 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <table><thead><tr><th>Name</th><th>Team</th><th>Outreaches</th><th>Meetings</th><th>Follow-ups</th><th>Status</th></tr></thead><tbody id="ad-body"></tbody></table>
   </div>
 </div>
+
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw9n1IzAnZO6J14EMmasZaJaDzNPG4cENzQhluMGEaMzl7FA7eEjYqyOZC9n2cVqc7Rng/exec";
 const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie","Van","Ethan"];
 const STRUCTURE=[
  {team:"Jesusa's team (Joe+)",   members:["Jesusa","Mark","Hervic","Alma","James Vaughn","Aiza","Michelle","Carina"]},
- {team:"Mae's team (Seb+)",      members:["Mae","Jade","Lovely","Ivony","Tony","Manuel","Clarence Barbs","Brian"]},
+ {team:"Mae's team (Seb+)",      members:["Mae","Jade","Lovely","Ivony","Tony","Manuel","Clarence Barbs"]},
  {team:"Sheena's team (Adam+)",  members:["Sheena","Pat","Anthony","Ernst","Francis","King Lennard","Rica Rei","Jose Bendano"]},
  {team:"Allen Marie's team (LinkedIn+)", members:["Allen Marie","Irene","Dominic","Lorenz","Janrobin","Edd","Jonnie","Molit"]},
  {team:"Jasper's team (Josh+)",  members:["Jasper","Riri","Ros","Jameson","Jade Lumontad","Hazel Mae Jeminez","Elmar Estrada","Goretti"]},
@@ -246,7 +354,7 @@ const TEAMCOLORS={
 function nyTodayISO(){return new Date().toLocaleString("en-CA",{timeZone:"America/New_York"}).split(",")[0];}
 function nyDDMM(){return new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",day:"2-digit",month:"2-digit",year:"numeric"});}
 function initials(n){return n.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();}
-document.getElementById("dateb").textContent=new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+document.getElementById("dateb").textContent=new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",weekday:"short",day:"numeric",month:"short"});
 function buildNames(containerId,onPick){
  const c=document.getElementById(containerId);
  STRUCTURE.forEach(g=>{
@@ -256,12 +364,11 @@ function buildNames(containerId,onPick){
   c.appendChild(grid);
  });
 }
-/* EOD */
-let eodSel=null;
-let eodAlready=false;
+
+/* ===================== EOD ===================== */
+let eodSel=null,eodAlready=false;
 buildNames("eod-names",(name,btn)=>{
-  eodSel=name;
-  eodAlready=false;
+  eodSel=name;eodAlready=false;
   document.querySelectorAll("#eod-names .name-chip").forEach(x=>x.classList.remove("selected"));
   btn.classList.add("selected");
   document.getElementById("eod-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
@@ -271,28 +378,18 @@ buildNames("eod-names",(name,btn)=>{
   const extra=document.getElementById("eod-extra");extra.innerHTML="";
   const rm=document.createElement("button");rm.className="opt-btn";rm.textContent="Remove today's EOD";rm.onclick=showRemove;extra.appendChild(rm);
   if(SENIORS.includes(name)){const cm=document.createElement("button");cm.className="opt-btn senior";cm.textContent="★ Leave EOD comment";cm.onclick=showComment;extra.appendChild(cm);}
-  // reset form + status
   ["e-gmail","e-gviews","e-outlook","e-oviews","e-mtg","e-fu"].forEach(id=>document.getElementById(id).value=0);
   document.getElementById("eod-already").style.display="none";
   document.getElementById("eod-submit-btn").textContent="Submit EOD";
-  showEODForm();
-  checkAlreadySubmitted(name);
-})
+  showEODForm();checkAlreadySubmitted(name);
+});
 function checkAlreadySubmitted(name){
   fetch(SCRIPT_URL+"?action=eodtoday&t="+Date.now())
-   .then(r=>r.json())
-   .then(data=>{
+   .then(r=>r.json()).then(data=>{
      const rows=(data&&data.eod)?data.eod:(Array.isArray(data)?data:[]);
      const mine=rows.find(r=>r.name===name);
-     if(mine){
-       eodAlready=true;
-       document.getElementById("eod-already").style.display="block";
-       document.getElementById("eod-submit-btn").textContent="Update my submission";
-       document.getElementById("e-mtg").value=mine.meetings||0;
-       document.getElementById("e-fu").value=mine.followups||0;
-     }
-   })
-   .catch(()=>{});
+     if(mine){eodAlready=true;document.getElementById("eod-already").style.display="block";document.getElementById("eod-submit-btn").textContent="Update my submission";document.getElementById("e-mtg").value=mine.meetings||0;document.getElementById("e-fu").value=mine.followups||0;}
+   }).catch(()=>{});
 }
 function showEODForm(){document.getElementById("eod-form").style.display="block";document.getElementById("eod-remove").style.display="none";document.getElementById("eod-comment").style.display="none";}
 function showRemove(){document.getElementById("eod-form").style.display="none";document.getElementById("eod-remove").style.display="block";document.getElementById("eod-comment").style.display="none";}
@@ -319,9 +416,9 @@ function submitComment(){
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
  banner("eod-banner","ok","Comment submitted. Thanks "+eodSel+"!");backEOD();
 }
-/* BOOKING */
-let bkSel=null;
-let myBookings=[];
+
+/* ===================== BOOKING ===================== */
+let bkSel=null,myBookings=[];
 buildNames("bk-names",(name,btn)=>{
   bkSel=name;
   document.querySelectorAll("#bk-names .name-chip").forEach(x=>x.classList.remove("selected"));
@@ -330,23 +427,17 @@ buildNames("bk-names",(name,btn)=>{
   document.getElementById("bk-names").style.display="none";
   document.getElementById("bk-form").style.display="block";
   document.getElementById("b-date").value=nyTodayISO();
-  document.getElementById("b-email").value="";
-  document.getElementById("b-company").value="";
+  document.getElementById("b-email").value="";document.getElementById("b-company").value="";
   document.getElementById("b-dupe").style.display="none";
   loadMyBookings(name);
-})
+});
 function loadMyBookings(name){
   myBookings=[];
   document.getElementById("bk-mine-loading").style.display="block";
   document.getElementById("bk-mine-list").innerHTML="";
   document.getElementById("bk-mine-label").textContent="Your logged bookings";
   fetch(SCRIPT_URL+"?action=bookingemails&name="+encodeURIComponent(name)+"&t="+Date.now())
-   .then(r=>r.json())
-   .then(rows=>{
-     myBookings=(rows||[]).map(b=>({date:b.date||"",email:b.email||""}));
-     myBookings.reverse();
-     renderMyBookings();
-   })
+   .then(r=>r.json()).then(rows=>{myBookings=(rows||[]).map(b=>({date:b.date||"",email:b.email||""}));myBookings.reverse();renderMyBookings();})
    .catch(()=>{document.getElementById("bk-mine-loading").textContent="Couldn't load your bookings.";});
 }
 function renderMyBookings(){
@@ -355,17 +446,12 @@ function renderMyBookings(){
   document.getElementById("bk-mine-label").textContent="Your logged bookings ("+myBookings.length+")";
   if(!myBookings.length){list.innerHTML='<div class="bkempty">No bookings logged yet.</div>';return;}
   list.innerHTML="";
-  myBookings.forEach(b=>{
-    const d=document.createElement("div");d.className="bkrow";
-    d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+'</span>';
-    list.appendChild(d);
-  });
+  myBookings.forEach(b=>{const d=document.createElement("div");d.className="bkrow";d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+'</span>';list.appendChild(d);});
 }
 function checkDupe(){
   const email=document.getElementById("b-email").value.trim().toLowerCase();
   const warn=document.getElementById("b-dupe");
-  if(email && myBookings.some(b=>(b.email||"").trim().toLowerCase()===email)){warn.style.display="block";}
-  else{warn.style.display="none";}
+  if(email&&myBookings.some(b=>(b.email||"").trim().toLowerCase()===email)){warn.style.display="block";}else{warn.style.display="none";}
 }
 function backBk(){document.getElementById("bk-form").style.display="none";document.getElementById("bk-names").style.display="block";bkSel=null;}
 function submitBooking(){
@@ -378,13 +464,96 @@ function submitBooking(){
  fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:isoDate}));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
  banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");
- myBookings.unshift({date:isoDate,email:email});
- renderMyBookings();
- document.getElementById("b-email").value="";
- document.getElementById("b-company").value="";
- document.getElementById("b-dupe").style.display="none";
+ myBookings.unshift({date:isoDate,email:email});renderMyBookings();
+ document.getElementById("b-email").value="";document.getElementById("b-company").value="";document.getElementById("b-dupe").style.display="none";
 }
-/* LEADERBOARD */
+
+/* ===================== ATTENDANCE ===================== */
+let attSelectedStatus="";
+
+function selectAttStatus(s){
+  attSelectedStatus=s;
+  document.getElementById("btn-Present").className="att-status-btn"+(s==="Present"?" sel-present":"");
+  document.getElementById("btn-VL").className="att-status-btn"+(s==="VL"?" sel-vl":"");
+  document.getElementById("btn-SL").className="att-status-btn"+(s==="SL"?" sel-sl":"");
+}
+
+function attSetToday(){document.getElementById("attDate").value=nyTodayISO();}
+
+async function onAttNameOrDateChange(){
+  const name=document.getElementById("attName").value;
+  const dateVal=document.getElementById("attDate").value;
+  const already=document.getElementById("att-already");
+  already.style.display="none";already.innerHTML="";
+  selectAttStatus("");document.getElementById("attNotes").value="";
+  if(!name||!dateVal)return;
+  if(dateVal!==nyTodayISO())return;
+  try{
+    const res=await fetch(SCRIPT_URL+"?action=attendancetoday&t="+Date.now());
+    const roll=await res.json();
+    const mine=roll.find(r=>r.name===name&&r.submitted);
+    if(mine){
+      already.innerHTML="✓ Already submitted today — Status: <b>"+mine.status+"</b>. Submitting again will update your record.";
+      already.style.display="block";
+      selectAttStatus(mine.status);
+      document.getElementById("attNotes").value=mine.notes||"";
+    }
+  }catch(e){}
+}
+
+async function submitAttendance(){
+  const name=document.getElementById("attName").value.trim();
+  const dateVal=document.getElementById("attDate").value;
+  const notes=document.getElementById("attNotes").value.trim();
+  if(!name){alert("Please select your name.");return;}
+  if(!dateVal){alert("Please select a date.");return;}
+  if(!attSelectedStatus){alert("Please select a status — Present, VL, or SL.");return;}
+  const[y,m,d]=dateVal.split("-");
+  const dateFormatted=d+"/"+m+"/"+y;
+  document.getElementById("attSubmitBtn").style.display="none";
+  document.getElementById("attSubmitting").style.display="block";
+  const ab=document.getElementById("att-banner");ab.className="banner";ab.style.display="none";
+  try{
+    const fd=new FormData();fd.append("type","attendance");
+    fd.append("data",JSON.stringify({name:name,date:dateFormatted,status:attSelectedStatus,notes:notes}));
+    await fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
+    const isFuture=dateVal>nyTodayISO();
+    ab.textContent=isFuture?"✅ Leave filed for "+dateFormatted+" — "+attSelectedStatus:"✅ Attendance submitted — "+name+", "+attSelectedStatus;
+    ab.className="banner ok";
+    selectAttStatus("");document.getElementById("attNotes").value="";
+    document.getElementById("att-already").style.display="none";
+    attSetToday();
+    setTimeout(loadRollCall,1500);
+  }catch(e){ab.textContent="Submission failed — please try again.";ab.className="banner err";}
+  finally{document.getElementById("attSubmitBtn").style.display="block";document.getElementById("attSubmitting").style.display="none";}
+}
+
+async function loadRollCall(){
+  const loading=document.getElementById("att-roll-loading");
+  const grid=document.getElementById("att-roll-grid");
+  loading.style.display="block";grid.innerHTML="";
+  document.getElementById("att-stats").textContent="";
+  try{
+    const res=await fetch(SCRIPT_URL+"?action=attendancetoday&t="+Date.now());
+    const roll=await res.json();
+    loading.style.display="none";
+    const done=roll.filter(r=>r.submitted),pending=roll.filter(r=>!r.submitted);
+    document.getElementById("att-stats").textContent="— "+done.length+" submitted, "+pending.length+" pending";
+    const lbl={Present:"✅ Present",VL:"✈️ VL",SL:"🤒 SL"};
+    [...done,...pending].forEach(p=>{
+      const card=document.createElement("div");
+      card.className="att-card "+(p.submitted?"submitted":"not-submitted");
+      const timePart=p.submitted&&p.time?String(p.time).split(" ")[1]||"":"";
+      card.innerHTML='<div class="ac-name">'+p.name+'</div>'+
+        '<div class="ac-status">'+(p.submitted?(lbl[p.status]||p.status):"⏳ Not submitted")+'</div>'+
+        (timePart?'<div class="ac-time">'+timePart+'</div>':"")+
+        (p.notes&&p.submitted?'<div class="ac-time">'+p.notes+'</div>':"");
+      grid.appendChild(card);
+    });
+  }catch(e){loading.textContent="Couldn't load roll call. Tap refresh to retry.";}
+}
+
+/* ===================== LEADERBOARD ===================== */
 let lbData=null,lbPeriod="month";
 function loadLeaderboard(){
  document.getElementById("lb-loading").style.display="block";
@@ -398,16 +567,14 @@ function computeStats(bookings){
  const parts=todayKey.split("-").map(Number);
  const anchor=new Date(Date.UTC(parts[0],parts[1]-1,parts[2],12,0,0));
  const dow=(anchor.getUTCDay()+6)%7;
- const monday=new Date(anchor); monday.setUTCDate(anchor.getUTCDate()-dow);
+ const monday=new Date(anchor);monday.setUTCDate(anchor.getUTCDate()-dow);
  const weekStartKey=monday.toISOString().slice(0,10);
  const monthStartKey=todayKey.slice(0,8)+"01";
  function valid(k){return k&&/^\d{4}-\d{2}-\d{2}$/.test(String(k));}
  const per={};ALL.forEach(a=>per[a.name]={name:a.name,team:a.team,today:0,week:0,month:0,total:0});
  (bookings||[]).forEach(b=>{
-   if(!per[b.name])return;
-   per[b.name].total++;
-   const k=b.dateKey;
-   if(!valid(k))return;
+   if(!per[b.name])return;per[b.name].total++;
+   const k=b.dateKey;if(!valid(k))return;
    if(k===todayKey)per[b.name].today++;
    if(k>=weekStartKey&&k<=todayKey)per[b.name].week++;
    if(k>=monthStartKey&&k<=todayKey)per[b.name].month++;
@@ -434,7 +601,8 @@ function renderLeaderboard(){
  document.getElementById("lb-loading").style.display="none";
  document.getElementById("lb-content").style.display="block";
 }
-/* ADMIN */
+
+/* ===================== ADMIN ===================== */
 function loadAdmin(){
  document.getElementById("ad-loading").style.display="block";
  document.getElementById("ad-content").style.display="none";
@@ -444,7 +612,6 @@ function loadAdmin(){
 }
 function renderAdmin(data){
  const rows=(data&&data.eod)?data.eod:(Array.isArray(data)?data:[]);
- const comments=(data&&data.comments)?data.comments:[];
  const map={};rows.forEach(r=>{map[r.name]=r;});
  let te=0,tm=0,tf=0,ts=0;
  const body=document.getElementById("ad-body");body.innerHTML="";
@@ -461,17 +628,22 @@ function renderAdmin(data){
   if(gs>0){const sr=document.createElement("tr");sr.className="sub-row";sr.innerHTML='<td colspan="2">'+g.team+' subtotal</td><td>'+ge+'</td><td>'+gm+'</td><td>'+gf+'</td><td>'+gs+'/'+g.members.length+'</td>';body.appendChild(sr);}
  });
  const tr=document.createElement("tr");tr.className="total-row";tr.innerHTML='<td colspan="2">Grand Total</td><td>'+te+'</td><td>'+tm+'</td><td>'+tf+'</td><td>'+ts+'/'+ALL.length+'</td>';body.appendChild(tr);
- document.getElementById("ad-emails").textContent=te;
- document.getElementById("ad-mtg").textContent=tm;
- document.getElementById("ad-fu").textContent=tf;
- document.getElementById("ad-sub").textContent=ts+"/"+ALL.length;
- document.getElementById("ad-loading").style.display="none";
- document.getElementById("ad-content").style.display="block";
+ document.getElementById("ad-emails").textContent=te;document.getElementById("ad-mtg").textContent=tm;
+ document.getElementById("ad-fu").textContent=tf;document.getElementById("ad-sub").textContent=ts+"/"+ALL.length;
+ document.getElementById("ad-loading").style.display="none";document.getElementById("ad-content").style.display="block";
 }
-/* helpers */
+
+/* ===================== HELPERS ===================== */
 function v(id){return document.getElementById(id).value;}
 function banner(id,kind,msg){const b=document.getElementById(id);b.className="banner "+kind;b.textContent=msg;}
-function sv(id,btn){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav-tab").forEach(x=>x.classList.remove("active"));document.getElementById("v-"+id).classList.add("active");btn.classList.add("active");if(id==="leaderboard")loadLeaderboard();if(id==="admin")loadAdmin();}
+function sv(id,btn){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(x=>x.classList.remove("active"));
+  document.getElementById("v-"+id).classList.add("active");btn.classList.add("active");
+  if(id==="leaderboard")loadLeaderboard();
+  if(id==="admin")loadAdmin();
+  if(id==="attendance"){attSetToday();loadRollCall();}
+}
 </script>
 </body>
 </html>
