@@ -134,10 +134,10 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <button class="nav-tab" onclick="sv('attendance',this)">Attendance</button>
     <button class="nav-tab" onclick="sv('leaderboard',this)">Leaderboard</button>
     <button class="nav-tab" onclick="sv('admin',this)">Admin</button>
+    <button class="nav-tab" onclick="sv('leads',this)">Leads</button>
   </div>
   <div class="date-badge" id="dateb"></div>
 </div>
-
 <!-- EOD -->
 <div class="view active" id="v-eod">
   <h1>End of Day Report</h1>
@@ -174,7 +174,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
-
 <!-- BOOKING -->
 <div class="view" id="v-booking">
   <h1>Log a Booking</h1>
@@ -197,7 +196,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
-
 <!-- ATTENDANCE -->
 <div class="view" id="v-attendance">
   <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
@@ -207,10 +205,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
     <button class="refresh-btn" onclick="loadRollCall()">↻ refresh</button>
   </div>
-
   <div class="banner" id="att-banner"></div>
   <div class="att-already" id="att-already"></div>
-
   <div class="form-card" style="margin-bottom:18px;">
     <h3>Submit Attendance</h3>
     <div class="field-grid">
@@ -276,7 +272,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <span id="attSubmitting" style="display:none;color:var(--text3);font-size:13px;font-family:var(--mono);">Submitting…</span>
     </div>
   </div>
-
   <div class="sectlabel">
     Today's Roll Call
     <span class="att-stats" id="att-stats"></span>
@@ -284,7 +279,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div id="att-roll-loading" class="loading" style="display:none;">Loading…</div>
   <div class="att-roll-grid" id="att-roll-grid"></div>
 </div>
-
 <!-- LEADERBOARD -->
 <div class="view" id="v-leaderboard">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
@@ -310,7 +304,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
   </div>
 </div>
-
 <!-- ADMIN -->
 <div class="view" id="v-admin">
   <div class="row" style="justify-content:space-between;align-items:flex-start;">
@@ -328,7 +321,47 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <table><thead><tr><th>Name</th><th>Team</th><th>Outreaches</th><th>Meetings</th><th>Follow-ups</th><th>Status</th></tr></thead><tbody id="ad-body"></tbody></table>
   </div>
 </div>
-
+<!-- LEADS -->
+<div class="view" id="v-leads">
+  <h1>Leads</h1>
+  <p class="sub">Pick your name to claim a batch of leads, remove contacts, or search the Do Not Contact list.</p>
+  <div class="banner" id="leads-banner"></div>
+  <div id="leads-names"></div>
+  <div id="leads-panel" style="display:none">
+    <div class="form-card">
+      <h3 id="leads-person">—</h3>
+      <div class="row">
+        <div class="field" style="max-width:220px;">
+          <label>Number of leads (max 150)</label>
+          <input type="number" id="ld-count" min="1" max="150" value="150">
+        </div>
+        <button class="btn-primary" id="ld-claim-btn" onclick="claimLeads()">Get Leads</button>
+      </div>
+      <div id="ld-claim-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
+      <div id="ld-claim-result"></div>
+    </div>
+    <div class="form-card">
+      <h3>Remove leads / Do Not Contact</h3>
+      <div class="field full">
+        <label>Paste exact emails (one per line) or a domain like @company.com to remove every lead at that domain</label>
+        <textarea id="ld-remove-input" placeholder="jane@company.com&#10;@otherco.com"></textarea>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn-danger" id="ld-remove-btn" onclick="removeLeadsUI()">Remove from Leads</button>
+      </div>
+      <div id="ld-remove-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
+    </div>
+    <div class="form-card">
+      <h3>Do Not Contact list</h3>
+      <div class="field full">
+        <label>Search by email</label>
+        <input type="text" id="ld-dnc-search" placeholder="Search…" oninput="searchDNC()">
+      </div>
+      <div id="ld-dnc-results" style="margin-top:10px;"></div>
+    </div>
+    <div class="row"><button class="btn-secondary" onclick="backLeads()">← Back</button></div>
+  </div>
+</div>
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw9n1IzAnZO6J14EMmasZaJaDzNPG4cENzQhluMGEaMzl7FA7eEjYqyOZC9n2cVqc7Rng/exec";
 const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie","Van","Ethan"];
@@ -364,7 +397,6 @@ function buildNames(containerId,onPick){
   c.appendChild(grid);
  });
 }
-
 /* ===================== EOD ===================== */
 let eodSel=null,eodAlready=false;
 buildNames("eod-names",(name,btn)=>{
@@ -416,7 +448,6 @@ function submitComment(){
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
  banner("eod-banner","ok","Comment submitted. Thanks "+eodSel+"!");backEOD();
 }
-
 /* ===================== BOOKING ===================== */
 let bkSel=null,myBookings=[];
 buildNames("bk-names",(name,btn)=>{
@@ -467,19 +498,15 @@ function submitBooking(){
  myBookings.unshift({date:isoDate,email:email});renderMyBookings();
  document.getElementById("b-email").value="";document.getElementById("b-company").value="";document.getElementById("b-dupe").style.display="none";
 }
-
 /* ===================== ATTENDANCE ===================== */
 let attSelectedStatus="";
-
 function selectAttStatus(s){
   attSelectedStatus=s;
   document.getElementById("btn-Present").className="att-status-btn"+(s==="Present"?" sel-present":"");
   document.getElementById("btn-VL").className="att-status-btn"+(s==="VL"?" sel-vl":"");
   document.getElementById("btn-SL").className="att-status-btn"+(s==="SL"?" sel-sl":"");
 }
-
 function attSetToday(){document.getElementById("attDate").value=nyTodayISO();}
-
 async function onAttNameOrDateChange(){
   const name=document.getElementById("attName").value;
   const dateVal=document.getElementById("attDate").value;
@@ -500,7 +527,6 @@ async function onAttNameOrDateChange(){
     }
   }catch(e){}
 }
-
 async function submitAttendance(){
   const name=document.getElementById("attName").value.trim();
   const dateVal=document.getElementById("attDate").value;
@@ -527,7 +553,6 @@ async function submitAttendance(){
   }catch(e){ab.textContent="Submission failed — please try again.";ab.className="banner err";}
   finally{document.getElementById("attSubmitBtn").style.display="block";document.getElementById("attSubmitting").style.display="none";}
 }
-
 async function loadRollCall(){
   const loading=document.getElementById("att-roll-loading");
   const grid=document.getElementById("att-roll-grid");
@@ -552,7 +577,6 @@ async function loadRollCall(){
     });
   }catch(e){loading.textContent="Couldn't load roll call. Tap refresh to retry.";}
 }
-
 /* ===================== LEADERBOARD ===================== */
 let lbData=null,lbPeriod="month";
 function loadLeaderboard(){
@@ -601,7 +625,6 @@ function renderLeaderboard(){
  document.getElementById("lb-loading").style.display="none";
  document.getElementById("lb-content").style.display="block";
 }
-
 /* ===================== ADMIN ===================== */
 function loadAdmin(){
  document.getElementById("ad-loading").style.display="block";
@@ -632,7 +655,80 @@ function renderAdmin(data){
  document.getElementById("ad-fu").textContent=tf;document.getElementById("ad-sub").textContent=ts+"/"+ALL.length;
  document.getElementById("ad-loading").style.display="none";document.getElementById("ad-content").style.display="block";
 }
-
+/* ===================== LEADS ===================== */
+let leadsSel=null;
+buildNames("leads-names",(name,btn)=>{
+  leadsSel=name;
+  document.querySelectorAll("#leads-names .name-chip").forEach(x=>x.classList.remove("selected"));
+  btn.classList.add("selected");
+  document.getElementById("leads-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
+  document.getElementById("leads-names").style.display="none";
+  document.getElementById("leads-panel").style.display="block";
+  document.getElementById("ld-claim-status").textContent="";
+  document.getElementById("ld-claim-result").innerHTML="";
+  document.getElementById("ld-remove-status").textContent="";
+  document.getElementById("ld-remove-input").value="";
+  document.getElementById("ld-dnc-search").value="";
+  searchDNC();
+});
+function backLeads(){document.getElementById("leads-panel").style.display="none";document.getElementById("leads-names").style.display="block";leadsSel=null;}
+async function claimLeads(){
+  if(!leadsSel)return;
+  const count=v("ld-count");
+  const statusEl=document.getElementById("ld-claim-status");
+  const resultEl=document.getElementById("ld-claim-result");
+  statusEl.textContent="Claiming leads…";resultEl.innerHTML="";
+  try{
+    const fd=new FormData();fd.append("type","claimleads");
+    fd.append("data",JSON.stringify({name:leadsSel,count:count}));
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+    const data=await res.json();
+    if(!data.success){statusEl.textContent="Error: "+data.error;return;}
+    statusEl.textContent="Claimed "+data.count+" lead(s).";
+    if(data.count>0){
+      const csv="email\n"+data.leads.join("\n");
+      const blob=new Blob([csv],{type:"text/csv"});
+      const url=URL.createObjectURL(blob);
+      resultEl.innerHTML='<a class="btn-primary" style="display:inline-block;margin:10px 0;text-decoration:none;" href="'+url+'" download="leads_'+leadsSel+'_'+Date.now()+'.csv">Download CSV</a>'+
+        '<table><thead><tr><th>#</th><th>Email</th></tr></thead><tbody>'+
+        data.leads.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+e+'</td></tr>').join("")+
+        '</tbody></table>';
+    }
+  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
+}
+async function removeLeadsUI(){
+  const input=v("ld-remove-input");
+  const statusEl=document.getElementById("ld-remove-status");
+  if(!input.trim()){statusEl.textContent="Paste at least one email or domain first.";return;}
+  statusEl.textContent="Removing…";
+  try{
+    const fd=new FormData();fd.append("type","removeleads");
+    fd.append("data",JSON.stringify({input:input,name:leadsSel||"Unknown"}));
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+    const data=await res.json();
+    if(!data.success){statusEl.textContent="Error: "+data.error;return;}
+    statusEl.textContent=data.removedCount+" lead(s) removed and added to Do Not Contact.";
+    document.getElementById("ld-remove-input").value="";
+    searchDNC();
+  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
+}
+let dncTimer=null;
+function searchDNC(){
+  clearTimeout(dncTimer);
+  dncTimer=setTimeout(async()=>{
+    const query=v("ld-dnc-search");
+    const el=document.getElementById("ld-dnc-results");
+    el.innerHTML='<div class="loading" style="padding:8px 0;">Searching…</div>';
+    try{
+      const res=await fetch(SCRIPT_URL+"?action=searchdnc&query="+encodeURIComponent(query)+"&t="+Date.now());
+      const data=await res.json();
+      if(!data||!data.length){el.innerHTML='<div class="bkempty">No matches.</div>';return;}
+      el.innerHTML='<table><thead><tr><th>Email</th><th>Date Added</th><th>Added By</th><th>Reason</th></tr></thead><tbody>'+
+        data.map(r=>'<tr><td>'+r.email+'</td><td>'+r.dateAdded+'</td><td>'+r.addedBy+'</td><td>'+r.reason+'</td></tr>').join("")+
+        '</tbody></table>';
+    }catch(e){el.innerHTML='Search failed.';}
+  },300);
+}
 /* ===================== HELPERS ===================== */
 function v(id){return document.getElementById(id).value;}
 function banner(id,kind,msg){const b=document.getElementById(id);b.className="banner "+kind;b.textContent=msg;}
