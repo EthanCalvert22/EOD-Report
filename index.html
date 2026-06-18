@@ -511,9 +511,14 @@ function submitComment(){
  if(!eodSel)return;
  const t=v("c-text").trim();
  if(!t){banner("eod-banner","err","Please write a comment first.");return;}
+ // Submit the EOD numbers too — the comment view hides the EOD form, so without
+ // this, leaving a comment would skip logging the EOD report entirely.
+ const eodFd=new FormData();eodFd.append("type","eod");
+ eodFd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:+v("e-mtg"),followups:+v("e-fu")}));
+ fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:eodFd});
  const fd=new FormData();fd.append("type","comment");fd.append("data",JSON.stringify({name:eodSel,comment:t}));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("eod-banner","ok","Comment submitted. Thanks "+eodSel+"!");backEOD();
+ banner("eod-banner","ok",(eodAlready?"EOD updated":"EOD logged")+" and comment submitted. Thanks "+eodSel+"!");backEOD();
 }
 /* ===================== BOOKING ===================== */
 let bkSel=null,myBookings=[];
