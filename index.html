@@ -38,6 +38,15 @@ h1{font-size:27px;font-weight:800;margin-bottom:6px;letter-spacing:-0.01em;}
 .section-divider{height:1px;background:linear-gradient(90deg,var(--border2),transparent);margin:30px 0 18px;}
 .section-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
 .section-head .dot-mark{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.docs-list{display:flex;flex-direction:column;gap:8px;}
+.doc-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 14px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);text-decoration:none;transition:border-color .15s var(--ease),background .15s var(--ease),transform .15s var(--ease);}
+.doc-row:hover{border-color:var(--blue-light);background:var(--card2);transform:translateY(-1px);}
+.doc-main{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.doc-title{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:8px;}
+.doc-title::before{content:"📄";font-size:13px;opacity:0.8;flex-shrink:0;}
+.doc-desc{font-size:12px;color:var(--text2);line-height:1.45;}
+.doc-open{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;flex-shrink:0;padding:5px 10px;border:1px solid var(--border2);border-radius:6px;transition:color .15s var(--ease),border-color .15s var(--ease);}
+.doc-row:hover .doc-open{color:var(--blue-light);border-color:var(--blue-light);}
 .name-chip{padding:10px 12px;border-radius:9px;border:1px solid var(--border2);background:var(--card);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:transform .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),background .15s var(--ease),box-shadow .15s var(--ease);text-align:center;}
 .name-chip:hover{border-color:var(--blue-light);color:var(--text);background:var(--card2);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
 .name-chip:active{transform:translateY(0);}
@@ -167,6 +176,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <button class="nav-tab" onclick="sv('leads',this)">Leads</button>
     <button class="nav-tab active" onclick="sv('eod',this)">Submit EOD</button>
     <button class="nav-tab" onclick="sv('leaderboard',this)">Leaderboard</button>
+    <button class="nav-tab" onclick="sv('docs',this)">Docs</button>
     <button class="nav-tab" onclick="sv('admin',this)">Admin</button>
   </div>
   <div class="date-badge" id="dateb"></div>
@@ -336,6 +346,15 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <table><thead><tr><th>#</th><th>Associate</th><th>Team</th><th>Today</th><th>Week</th><th>Month</th><th>Total</th></tr></thead><tbody id="lb-ind"></tbody></table>
     </div>
   </div>
+</div>
+<!-- DOCS -->
+<div class="view" id="v-docs">
+  <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+    <div><h1>Helpful Docs</h1><p class="sub">SOPs, prompts &amp; response guides, and other resources — grouped by topic.</p></div>
+    <button class="refresh-btn" onclick="loadDocs()">↻ refresh</button>
+  </div>
+  <div id="docs-loading" class="loading">Loading…</div>
+  <div id="docs-content" style="display:none"></div>
 </div>
 <!-- ADMIN -->
 <div class="view" id="v-admin">
@@ -812,7 +831,42 @@ function sv(id,btn){
   if(id==="leaderboard")loadLeaderboard();
   if(id==="admin")loadAdmin();
   if(id==="attendance"){attSetToday();loadRollCall();}
+  if(id==="docs")loadDocs();
 }
+/* ===================== DOCS ===================== */
+let docsLoaded=false;
+function loadDocs(){
+  document.getElementById("docs-loading").style.display="block";
+  document.getElementById("docs-content").style.display="none";
+  fetch(SCRIPT_URL+"?action=getdocs&t="+Date.now())
+    .then(r=>r.json())
+    .then(data=>{
+      const el=document.getElementById("docs-content");
+      if(!data||!data.length){
+        el.innerHTML='<div class="bkempty">No docs added yet — add rows to the "Docs" tab in the sheet (Category, Category Description, Doc Title, Doc Description, Doc Link).</div>';
+      }else{
+        el.innerHTML=data.map(cat=>
+          '<div class="form-card">'+
+            '<h3>'+escapeHtml(cat.category)+'</h3>'+
+            (cat.description?'<p class="sub" style="margin:-6px 0 14px;font-size:13px;">'+escapeHtml(cat.description)+'</p>':'')+
+            '<div class="docs-list">'+
+              cat.items.map(d=>'<a class="doc-row" href="'+escapeAttr(d.link)+'" target="_blank" rel="noopener noreferrer">'+
+                '<span class="doc-main"><span class="doc-title">'+escapeHtml(d.title)+'</span>'+
+                (d.description?'<span class="doc-desc">'+escapeHtml(d.description)+'</span>':'')+
+                '</span>'+
+                '<span class="doc-open">Open ↗</span></a>').join("")+
+            '</div>'+
+          '</div>'
+        ).join("");
+      }
+      document.getElementById("docs-loading").style.display="none";
+      el.style.display="block";
+      docsLoaded=true;
+    })
+    .catch(()=>{document.getElementById("docs-loading").textContent="Couldn't load docs — check your connection and try again.";});
+}
+function escapeHtml(s){return (s||"").toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function escapeAttr(s){return escapeHtml(s);}
 </script>
 </body>
 </html>
