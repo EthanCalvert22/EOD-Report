@@ -29,7 +29,15 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(43,108,176,0.16),tr
 h1{font-size:27px;font-weight:800;margin-bottom:6px;letter-spacing:-0.01em;}
 .sub{font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.5;}
 .group-label{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin:20px 0 10px;font-family:var(--mono);}
-.name-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:18px;}
+.name-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:0;}
+.team-block{--team-color:var(--blue-light);background:linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.015));border:1px solid var(--border2);border-left:3px solid var(--team-color);border-radius:var(--radius);padding:16px 18px 14px;margin-bottom:14px;box-shadow:var(--shadow-sm);transition:box-shadow .2s var(--ease),transform .2s var(--ease);}
+.team-block:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.team-block-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.team-block-title{font-size:12px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;font-family:var(--mono);color:var(--text);}
+.team-block-count{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;}
+.section-divider{height:1px;background:linear-gradient(90deg,var(--border2),transparent);margin:30px 0 18px;}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.section-head .dot-mark{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .name-chip{padding:10px 12px;border-radius:9px;border:1px solid var(--border2);background:var(--card);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:transform .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease),background .15s var(--ease),box-shadow .15s var(--ease);text-align:center;}
 .name-chip:hover{border-color:var(--blue-light);color:var(--text);background:var(--card2);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
 .name-chip:active{transform:translateY(0);}
@@ -353,7 +361,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div class="banner" id="leads-banner"></div>
   <div id="leads-names"></div>
   <div id="leads-panel" style="display:none">
-    <div class="form-card">
+    <div class="section-head"><span class="dot-mark" style="background:var(--blue-light);"></span><span class="sectlabel" style="margin:0;color:var(--text2);">Claim leads</span></div>
+    <div class="form-card" style="border-color:rgba(66,153,225,0.25);">
       <h3 id="leads-person">—</h3>
       <div class="row">
         <div class="field" style="max-width:220px;">
@@ -365,18 +374,22 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div id="ld-claim-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
       <div id="ld-claim-result"></div>
     </div>
-    <div class="form-card">
+
+    <div class="section-divider"></div>
+    <div class="section-head"><span class="dot-mark" style="background:var(--red);"></span><span class="sectlabel" style="margin:0;color:var(--text2);">Do Not Contact</span></div>
+    <p class="sub" style="margin:4px 0 16px;font-size:13px;">Remove leads from circulation and check who's already blocked. You can paste several emails or domains at once — one per line, or comma-separated — to remove them all in a single request.</p>
+    <div class="form-card" style="border-color:rgba(252,129,129,0.22);">
       <h3>Remove leads / Do Not Contact</h3>
       <div class="field full">
-        <label>Paste exact emails (one per line) or a domain like @company.com to remove every lead at that domain</label>
-        <textarea id="ld-remove-input" placeholder="jane@company.com&#10;@otherco.com"></textarea>
+        <label>Paste exact emails (one per line, or comma-separated) or a domain like @company.com to remove every lead at that domain</label>
+        <textarea id="ld-remove-input" placeholder="jane@company.com&#10;john@other.com&#10;@blockedco.com"></textarea>
       </div>
       <div class="row" style="margin-top:10px;">
         <button class="btn-danger" id="ld-remove-btn" onclick="removeLeadsUI()">Remove from Leads</button>
       </div>
       <div id="ld-remove-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
     </div>
-    <div class="form-card">
+    <div class="form-card" style="border-color:rgba(252,129,129,0.22);">
       <h3>Do Not Contact list</h3>
       <div class="field full">
         <label>Search by email or domain (e.g. company.com)</label>
@@ -420,10 +433,16 @@ document.getElementById("dateb").textContent=new Date().toLocaleDateString("en-G
 function buildNames(containerId,onPick){
  const c=document.getElementById(containerId);
  STRUCTURE.forEach(g=>{
-  const lab=document.createElement("div");lab.className="group-label";lab.textContent=g.team;c.appendChild(lab);
+  const color=TEAMCOLORS[g.team]||"var(--blue-light)";
+  const block=document.createElement("div");block.className="team-block";block.style.setProperty("--team-color",color);
+  const header=document.createElement("div");header.className="team-block-header";
+  const title=document.createElement("div");title.className="team-block-title";title.textContent=g.team;
+  const count=document.createElement("div");count.className="team-block-count";count.textContent=g.members.length+" member"+(g.members.length===1?"":"s");
+  header.appendChild(title);header.appendChild(count);block.appendChild(header);
   const grid=document.createElement("div");grid.className="name-grid";
   g.members.forEach(name=>{const b=document.createElement("button");b.className="name-chip"+(SENIORS.includes(name)?" senior":"");b.textContent=name;b.onclick=()=>onPick(name,b);grid.appendChild(b);});
-  c.appendChild(grid);
+  block.appendChild(grid);
+  c.appendChild(block);
  });
 }
 /* ===================== EOD ===================== */
