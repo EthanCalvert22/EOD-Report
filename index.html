@@ -854,7 +854,11 @@ async function claimLeads(){
     const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
     const data=await res.json();
     if(!data.success){statusEl.textContent="Error: "+data.error;return;}
-    statusEl.textContent="Claimed "+data.count+" lead(s).";
+    if(data.repeat){
+      statusEl.innerHTML='⚠ You already claimed these '+data.count+' lead(s) about '+data.claimedAgo+' min ago — here they are again so nothing gets missed. (Claim again later for a fresh batch.)';
+    }else{
+      statusEl.textContent="Claimed "+data.count+" lead(s).";
+    }
     if(data.count>0){
       const joined=data.leads.join("\n");
       resultEl.innerHTML='<div style="margin:10px 0;">'+
