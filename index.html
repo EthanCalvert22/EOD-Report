@@ -191,7 +191,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 <div class="topbar">
   <div class="logo">EOD // Associate Team</div>
   <div class="nav-tabs">
-    <button class="nav-tab active" id="tab-home" onclick="sv('home',this)">Home</button>
+    <button class="nav-tab active" id="tab-home" onclick="showHomePicker()">Home</button>
     <button class="nav-tab" id="tab-leaderboard" onclick="sv('leaderboard',this)">Leaderboard</button>
     <button class="nav-tab" id="tab-docs" onclick="sv('docs',this)">Docs</button>
     <button class="nav-tab" id="tab-admin" onclick="sv('admin',this)">Admin</button>
@@ -222,7 +222,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 <!-- EOD -->
 <div class="view" id="v-eod">
-  <button class="btn-secondary" style="margin-bottom:10px;" onclick="sv('home',document.getElementById('tab-home'))">← Home</button>
+  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
   <h1>End of Day Report</h1>
   <p class="sub">Pick your name, enter today's numbers, submit. Seniors (★) get extra options.</p>
   <div class="banner" id="eod-banner"></div>
@@ -259,7 +259,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 <!-- BOOKING -->
 <div class="view" id="v-booking">
-  <button class="btn-secondary" style="margin-bottom:10px;" onclick="sv('home',document.getElementById('tab-home'))">← Home</button>
+  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
   <h1>Log a Booking</h1>
   <p class="sub">Tap your name, enter who booked, and the date it's booked for.</p>
   <div class="banner" id="bk-banner"></div>
@@ -288,7 +288,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 <!-- ATTENDANCE -->
 <div class="view" id="v-attendance">
-  <button class="btn-secondary" style="margin-bottom:10px;" onclick="sv('home',document.getElementById('tab-home'))">← Home</button>
+  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
   <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
     <div>
       <h1>Attendance</h1>
@@ -423,7 +423,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 <!-- LEADS -->
 <div class="view" id="v-leads">
-  <button class="btn-secondary" style="margin-bottom:10px;" onclick="sv('home',document.getElementById('tab-home'))">← Home</button>
+  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
   <h1>Leads</h1>
   <p class="sub">Pick your name to claim a batch of leads, remove contacts, or search the Do Not Contact list.</p>
   <div class="banner" id="leads-banner"></div>
@@ -958,6 +958,18 @@ function renderHomeHub(){
     picker.style.display="block";hub.style.display="none";
     sub.textContent="Pick your name once — then jump straight into attendance, bookings, leads, or your EOD from here.";
   }
+}
+// Switches to the Home view and always shows the full team picker — used by
+// the top-nav "Home" button and the in-page "← Home" links, so jumping Home
+// from mid-task always lands on the actual home page with everyone's name on
+// it, rather than silently resuming whichever person's hub was last open.
+// (renderHomeHub() is still used on first page load, so a returning user's
+// saved name is restored automatically when they first open the app.)
+function showHomePicker(){
+  sv("home",document.getElementById("tab-home"));
+  document.getElementById("home-picker").style.display="block";
+  document.getElementById("home-hub").style.display="none";
+  document.getElementById("home-sub").textContent="Pick your name once — then jump straight into attendance, bookings, leads, or your EOD from here.";
 }
 // Selects `name` inside a buildNames-driven chip container (containerId), then
 // calls fn(name, matchedButtonOrNull) — used so Home can drive other tabs.
