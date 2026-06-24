@@ -286,6 +286,17 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
         <div class="row" style="margin-top:10px;"><button class="btn-primary" onclick="submitBookingForSaul()">Log Booking for Saul</button></div>
       </div>
     </div>
+    <div id="bk-rr-panel" style="display:none;margin-top:22px;">
+      <div class="form-card" style="border-color:var(--accent);">
+        <h3>Log a Round Robin booking</h3>
+        <div class="field-grid">
+          <div class="field full"><label>Booker email *</label><input type="email" id="b-rr-email" placeholder="name@company.com"></div>
+          <div class="field"><label>Date booked for</label><input type="date" id="b-rr-date"></div>
+          <div class="field"><label>Company / notes</label><input type="text" id="b-rr-company" placeholder="optional"></div>
+        </div>
+        <div class="row" style="margin-top:10px;"><button class="btn-primary" onclick="submitBookingForRoundRobin()">Log Round Robin Booking</button></div>
+      </div>
+    </div>
     <div id="bk-today" style="margin-top:22px;">
       <div class="sectlabel" id="bk-today-label">Today's bookings</div>
       <p class="sub" style="margin:-8px 0 12px;font-size:12px;">These are the ones counting toward today's meetings-booked total. Remove one if it was logged by mistake.</p>
@@ -511,6 +522,29 @@ const TEAMCOLORS={
  "Ethan's team (Saul+)":  "#D85A30",
  "Van's team (Luke+)":    "#378ADD",
 };
+// Each "capital strategy" team has a handful of core VP-team members (the first
+// coreCount names in STRUCTURE for that team) plus several dedicated Round Robin
+// Email Leads members further down the list. Core members occasionally book on
+// behalf of the round robin pool too — this lets them flag that specific booking
+// so it's credited (via eodCredit) to one of their team's round-robin teammates
+// instead of inflating their own VP-team count. Not needed for the LinkedIn team
+// (they have their own round robin link/process already) or for round-robin
+// members themselves (they're already the credit target).
+const ROUNDROBIN_INFO={
+ "Jesusa's team (Joe+)":  {coreCount:4, credit:"James Vaughn"},
+ "Mae's team (Seb+)":     {coreCount:4, credit:"Tony"},
+ "Sheena's team (Adam+)": {coreCount:3, credit:"Ernst"},
+ "Jasper's team (Josh+)": {coreCount:3, credit:"Jameson"},
+ "Ethan's team (Saul+)":  {coreCount:4, credit:"Rey"},
+ "Van's team (Luke+)":    {coreCount:3, credit:"Hiro Wayne"},
+};
+function getRoundRobinCredit(name){
+ const g=STRUCTURE.find(x=>x.team===ALL.find(a=>a.name===name).team);
+ const info=ROUNDROBIN_INFO[g.team];
+ if(!info)return null;
+ const idx=g.members.indexOf(name);
+ return idx>-1&&idx<info.coreCount?info.credit:null;
+}
 function nyTodayISO(){return new Date().toLocaleString("en-CA",{timeZone:"America/New_York"}).split(",")[0];}
 function nyDDMM(){return new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",day:"2-digit",month:"2-digit",year:"numeric"});}
 function initials(n){return n.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();}
@@ -607,6 +641,13 @@ function pickBkName(name,btn){
   document.getElementById("bk-saul-panel").style.display=(name==="Allen Marie")?"block":"none";
   document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
   document.getElementById("b-saul-date").value=nyTodayISO();
+  // Core "capital strategy" members occasionally book on behalf of the Round
+  // Robin Email Leads pool too — show the panel only if this person has a
+  // round-robin credit target (see getRoundRobinCredit()).
+  const rrCredit=getRoundRobinCredit(name);
+  document.getElementById("bk-rr-panel").style.display=rrCredit?"block":"none";
+  document.getElementById("b-rr-email").value="";document.getElementById("b-rr-company").value="";
+  document.getElementById("b-rr-date").value=nyTodayISO();
   loadMyBookingsToday(name);
   loadMyBookings(name);
 }
@@ -628,7 +669,7 @@ function renderMyBookingsToday(name){
   list.innerHTML="";
   myBookingsToday.forEach(b=>{
     const d=document.createElement("div");d.className="bkrow";
-    const tag=b.eodCredit?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(for Saul — credited to '+b.eodCredit+')</span>':'';
+    const tag=b.eodCredit?' <span style="font-size:11px;color:var(--accent);font-weight:600;">('+(b.eodCredit==="Ethan"?"for Saul":"Round Robin")+' — credited to '+b.eodCredit+')</span>':'';
     d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+tag+'</span>'+
       '<button class="bkdel" title="Remove this booking" onclick="deleteBooking(\''+encodeURIComponent(b.timestamp)+'\',\''+encodeURIComponent(name)+'\')">✕</button>';
     list.appendChild(d);
@@ -708,6 +749,33 @@ function submitBookingForSaul(){
    setTimeout(()=>loadMyBookingsToday(bkSel),1500);
  }
  document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
+}
+// Core "capital strategy" members booking on behalf of the Round Robin Email
+// Leads pool. Saved under their own name (leaderboard credit unchanged), but
+// eodCredit redirects the Today/EOD meetings-booked count to a Round Robin
+// teammate on their own senior team — same generic mechanism as Saul's credit,
+// just a different target name. See getRoundRobinCredit() and rebuildToday_v3.
+function submitBookingForRoundRobin(){
+ if(!bkSel)return;
+ const credit=getRoundRobinCredit(bkSel);
+ if(!credit)return;
+ const email=document.getElementById("b-rr-email").value.trim();
+ if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
+ const dateVal=document.getElementById("b-rr-date").value;
+ const isoDate=/^\d{4}-\d{2}-\d{2}$/.test(dateVal)?dateVal:nyTodayISO();
+ const company=document.getElementById("b-rr-company").value;
+ const team=ALL.find(x=>x.name===bkSel).team;
+ const fd=new FormData();fd.append("type","booking");
+ fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:company,date:isoDate,eodCredit:credit}));
+ fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
+ banner("bk-banner","ok","Round Robin booking logged ("+email+") — credited to "+credit+". Nice work! 🎉");
+ myBookings.unshift({date:isoDate,email:email});renderMyBookings();
+ if(isoDate===nyTodayISO()){
+   myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:company,eodCredit:credit});
+   renderMyBookingsToday(bkSel);
+   setTimeout(()=>loadMyBookingsToday(bkSel),1500);
+ }
+ document.getElementById("b-rr-email").value="";document.getElementById("b-rr-company").value="";
 }
 /* ===================== ATTENDANCE ===================== */
 let attSelectedStatus="";
