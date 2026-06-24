@@ -526,24 +526,25 @@ const TEAMCOLORS={
 // coreCount names in STRUCTURE for that team) plus several dedicated Round Robin
 // Email Leads members further down the list. Core members occasionally book on
 // behalf of the round robin pool too — this lets them flag that specific booking
-// so it's credited (via eodCredit) to one of their team's round-robin teammates
-// instead of inflating their own VP-team count. Not needed for the LinkedIn team
-// (they have their own round robin link/process already) or for round-robin
-// members themselves (they're already the credit target).
+// as a pooled Round Robin booking (see submitBookingForRoundRobin). It's added
+// straight into the EOD Report's pooled Round Robin total, without crediting any
+// single teammate's personal row. Not needed for the LinkedIn team (they have
+// their own round robin link/process already) or for round-robin members
+// themselves (their own bookings already count toward that pool).
 const ROUNDROBIN_INFO={
- "Jesusa's team (Joe+)":  {coreCount:4, credit:"James Vaughn"},
- "Mae's team (Seb+)":     {coreCount:4, credit:"Tony"},
- "Sheena's team (Adam+)": {coreCount:3, credit:"Ernst"},
- "Jasper's team (Josh+)": {coreCount:3, credit:"Jameson"},
- "Ethan's team (Saul+)":  {coreCount:4, credit:"Rey"},
- "Van's team (Luke+)":    {coreCount:3, credit:"Hiro Wayne"},
+ "Jesusa's team (Joe+)":  {coreCount:4},
+ "Mae's team (Seb+)":     {coreCount:4},
+ "Sheena's team (Adam+)": {coreCount:3},
+ "Jasper's team (Josh+)": {coreCount:3},
+ "Ethan's team (Saul+)":  {coreCount:4},
+ "Van's team (Luke+)":    {coreCount:3},
 };
-function getRoundRobinCredit(name){
+function isRoundRobinEligible(name){
  const g=STRUCTURE.find(x=>x.team===ALL.find(a=>a.name===name).team);
  const info=ROUNDROBIN_INFO[g.team];
- if(!info)return null;
+ if(!info)return false;
  const idx=g.members.indexOf(name);
- return idx>-1&&idx<info.coreCount?info.credit:null;
+ return idx>-1&&idx<info.coreCount;
 }
 function nyTodayISO(){return new Date().toLocaleString("en-CA",{timeZone:"America/New_York"}).split(",")[0];}
 function nyDDMM(){return new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",day:"2-digit",month:"2-digit",year:"numeric"});}
@@ -642,10 +643,9 @@ function pickBkName(name,btn){
   document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
   document.getElementById("b-saul-date").value=nyTodayISO();
   // Core "capital strategy" members occasionally book on behalf of the Round
-  // Robin Email Leads pool too — show the panel only if this person has a
-  // round-robin credit target (see getRoundRobinCredit()).
-  const rrCredit=getRoundRobinCredit(name);
-  document.getElementById("bk-rr-panel").style.display=rrCredit?"block":"none";
+  // Robin Email Leads pool too — show the panel only if eligible (see
+  // isRoundRobinEligible()).
+  document.getElementById("bk-rr-panel").style.display=isRoundRobinEligible(name)?"block":"none";
   document.getElementById("b-rr-email").value="";document.getElementById("b-rr-company").value="";
   document.getElementById("b-rr-date").value=nyTodayISO();
   loadMyBookingsToday(name);
@@ -669,7 +669,8 @@ function renderMyBookingsToday(name){
   list.innerHTML="";
   myBookingsToday.forEach(b=>{
     const d=document.createElement("div");d.className="bkrow";
-    const tag=b.eodCredit?' <span style="font-size:11px;color:var(--accent);font-weight:600;">('+(b.eodCredit==="Ethan"?"for Saul":"Round Robin")+' — credited to '+b.eodCredit+')</span>':'';
+    const tag=b.eodCredit?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(for Saul — credited to '+b.eodCredit+')</span>'
+      :b.roundRobinPool?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(Round Robin pool — not credited to a teammate)</span>':'';
     d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+tag+'</span>'+
       '<button class="bkdel" title="Remove this booking" onclick="deleteBooking(\''+encodeURIComponent(b.timestamp)+'\',\''+encodeURIComponent(name)+'\')">✕</button>';
     list.appendChild(d);
@@ -751,14 +752,13 @@ function submitBookingForSaul(){
  document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
 }
 // Core "capital strategy" members booking on behalf of the Round Robin Email
-// Leads pool. Saved under their own name (leaderboard credit unchanged), but
-// eodCredit redirects the Today/EOD meetings-booked count to a Round Robin
-// teammate on their own senior team — same generic mechanism as Saul's credit,
-// just a different target name. See getRoundRobinCredit() and rebuildToday_v3.
+// Leads pool. Saved under their own name (leaderboard credit unchanged), and
+// flagged with roundRobinPool:true so it's added straight into the EOD Report's
+// pooled Round Robin total — no individual teammate's personal row is touched.
+// See isRoundRobinEligible(), and rebuildToday_v3 / rebuildEODReport_v3 in
+// Code_FINAL.gs for how the pool flag (Bookings col H) is handled.
 function submitBookingForRoundRobin(){
- if(!bkSel)return;
- const credit=getRoundRobinCredit(bkSel);
- if(!credit)return;
+ if(!bkSel||!isRoundRobinEligible(bkSel))return;
  const email=document.getElementById("b-rr-email").value.trim();
  if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
  const dateVal=document.getElementById("b-rr-date").value;
@@ -766,12 +766,12 @@ function submitBookingForRoundRobin(){
  const company=document.getElementById("b-rr-company").value;
  const team=ALL.find(x=>x.name===bkSel).team;
  const fd=new FormData();fd.append("type","booking");
- fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:company,date:isoDate,eodCredit:credit}));
+ fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:company,date:isoDate,roundRobinPool:true}));
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("bk-banner","ok","Round Robin booking logged ("+email+") — credited to "+credit+". Nice work! 🎉");
+ banner("bk-banner","ok","Round Robin booking logged ("+email+") — added to the Round Robin Email Leads pool. Nice work! 🎉");
  myBookings.unshift({date:isoDate,email:email});renderMyBookings();
  if(isoDate===nyTodayISO()){
-   myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:company,eodCredit:credit});
+   myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:company,roundRobinPool:true});
    renderMyBookingsToday(bkSel);
    setTimeout(()=>loadMyBookingsToday(bkSel),1500);
  }
