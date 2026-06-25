@@ -218,6 +218,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <button class="hub-card" onclick="goHome('attendance')"><span class="hc-icon">✅</span><span class="hc-title">Attendance</span><span class="hc-sub">Mark present, or file VL/SL.</span></button>
       <button class="hub-card" onclick="goHome('booking')"><span class="hc-icon">📅</span><span class="hc-title">Log a Booking</span><span class="hc-sub">Counts automatically toward today's meetings.</span></button>
       <button class="hub-card" onclick="goHome('leads')"><span class="hc-icon">📇</span><span class="hc-title">Leads &amp; Do Not Contact</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
+      <button class="hub-card" id="hub-li-leads" style="display:none;" onclick="goHome('li-leads')"><span class="hc-icon">📇</span><span class="hc-title">LinkedIn Leads</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
       <button class="hub-card" onclick="goHome('eod')"><span class="hc-icon">📝</span><span class="hc-title">Submit EOD</span><span class="hc-sub">Log today's outreaches &amp; follow-ups.</span></button>
     </div>
   </div>
@@ -498,6 +499,64 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div id="ld-dnc-results" style="margin-top:10px;"></div>
     </div>
     <div class="row"><button class="btn-secondary" onclick="backLeads()">← Back</button></div>
+  </div>
+</div>
+<!-- LINKEDIN LEADS (passcode-gated, separate pool from the regular Leads tab) -->
+<div class="view" id="v-li-leads">
+  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
+  <h1>LinkedIn Leads</h1>
+  <p class="sub">A separate leads pool for the LinkedIn team. Enter the shared passcode once — this device will remember it after that.</p>
+  <div class="banner" id="li-banner"></div>
+
+  <div id="li-gate">
+    <div class="form-card" style="max-width:360px;">
+      <h3>Enter passcode</h3>
+      <div class="field full">
+        <label>Passcode</label>
+        <input type="password" id="li-passcode-input" placeholder="Passcode" onkeydown="if(event.key==='Enter')checkLiPasscode()">
+      </div>
+      <div class="row" style="margin-top:10px;"><button class="btn-primary" onclick="checkLiPasscode()">Unlock</button></div>
+      <div id="li-gate-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <div id="li-unlocked" style="display:none">
+    <div id="li-names"></div>
+    <div id="li-panel" style="display:none">
+      <div class="section-head"><span class="dot-mark" style="background:var(--blue-light);"></span><span class="sectlabel" style="margin:0;color:var(--text2);">Claim LinkedIn leads</span></div>
+      <div class="form-card" style="border-color:rgba(66,153,225,0.25);">
+        <h3 id="li-person">—</h3>
+        <div class="row">
+          <div class="field" style="max-width:220px;">
+            <label>Number of leads (max 150)</label>
+            <input type="number" id="li-count" min="1" max="150" value="150">
+          </div>
+          <button class="btn-primary" id="li-claim-btn" onclick="claimLiLeads()">Get LinkedIn Leads</button>
+        </div>
+        <div id="li-claim-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
+        <div id="li-claim-result"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="section-head"><span class="dot-mark" style="background:var(--red);"></span><span class="sectlabel" style="margin:0;color:var(--text2);">Remove from LinkedIn Leads</span></div>
+      <p class="sub" style="margin:4px 0 16px;font-size:13px;">Removed entries are added to the same shared Do Not Contact list used by the regular Leads tab.</p>
+      <div class="form-card" style="border-color:rgba(252,129,129,0.22);">
+        <h3>Remove leads / Do Not Contact</h3>
+        <div class="field full">
+          <label>Paste exact emails (one per line, or comma-separated) or a domain like @company.com</label>
+          <textarea id="li-remove-input" placeholder="jane@company.com&#10;john@other.com&#10;@blockedco.com"></textarea>
+        </div>
+        <div class="field full">
+          <label>Reason (your comment — e.g. "Unsubscribed", "Bounced", "Wrong contact")</label>
+          <input type="text" id="li-remove-reason" placeholder="Why is this being added to Do Not Contact?">
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn-danger" id="li-remove-btn" onclick="removeLiLeadsUI()">Remove from LinkedIn Leads</button>
+        </div>
+        <div id="li-remove-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
+      </div>
+      <div class="row"><button class="btn-secondary" onclick="backLiLeads()">← Back</button></div>
+    </div>
   </div>
 </div>
 <script>
@@ -1010,7 +1069,7 @@ async function removeLeadsUI(){
     const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
     const data=await res.json();
     if(!data.success){statusEl.textContent="Error: "+data.error;return;}
-    statusEl.textContent=data.addedToDncCount+" added to Do Not Contact ("+data.removedFromLeadsCount+" matched an active lead and was marked removed).";
+    statusEl.textContent=data.addedToDncCount+" added to Do Not Contact ("+data.removedFromLeadsCount+" matched an active lead and was marked removed, "+(data.removedFromLiLeadsCount||0)+" matched in LinkedIn Leads).";
     document.getElementById("ld-remove-input").value="";
     document.getElementById("ld-remove-reason").value="";
     searchDNC();
@@ -1040,6 +1099,114 @@ async function runDNCSearch(query){
       '</tbody></table>';
   }catch(e){el.innerHTML='Search failed.';}
 }
+/* ===================== LINKEDIN LEADS (passcode-gated) ===================== */
+// Only the original LinkedIn lead-list group gets this option at all — not
+// everyone on Allen Marie's team, and nobody else even sees the hub card.
+const LI_ALLOWED_NAMES=["Allen Marie","Irene","Dominic","Lorenz","Janrobin"];
+function isLiLeadsAllowed(name){return LI_ALLOWED_NAMES.indexOf(name)>-1;}
+const LI_PASSCODE_KEY="nsp_li_passcode";
+let liSel=null;
+function getLiPasscode(){try{return localStorage.getItem(LI_PASSCODE_KEY)||"";}catch(e){return "";}}
+function setLiPasscode(code){try{localStorage.setItem(LI_PASSCODE_KEY,code);}catch(e){}}
+buildNames("li-names",pickLiLeadsName);
+function liShowGateOrUnlocked(){
+  const unlocked=!!getLiPasscode();
+  document.getElementById("li-gate").style.display=unlocked?"none":"block";
+  document.getElementById("li-unlocked").style.display=unlocked?"block":"none";
+}
+async function checkLiPasscode(){
+  const code=v("li-passcode-input");
+  const statusEl=document.getElementById("li-gate-status");
+  if(!code.trim()){statusEl.textContent="Enter the passcode first.";return;}
+  statusEl.textContent="Checking…";
+  try{
+    const res=await fetch(SCRIPT_URL+"?action=checklipasscode&code="+encodeURIComponent(code)+"&t="+Date.now());
+    const data=await res.json();
+    if(!data.ok){statusEl.textContent="Incorrect passcode.";return;}
+    setLiPasscode(code);
+    document.getElementById("li-passcode-input").value="";
+    statusEl.textContent="";
+    liShowGateOrUnlocked();
+    const name=getHomeUser();
+    if(name)autoPickInContainer("li-names",name,pickLiLeadsName);
+  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
+}
+function pickLiLeadsName(name,btn){
+  liSel=name;
+  document.querySelectorAll("#li-names .name-chip").forEach(x=>x.classList.remove("selected"));
+  if(btn)btn.classList.add("selected");
+  document.getElementById("li-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
+  document.getElementById("li-names").style.display="none";
+  document.getElementById("li-panel").style.display="block";
+  document.getElementById("li-claim-status").textContent="";
+  document.getElementById("li-claim-result").innerHTML="";
+  document.getElementById("li-remove-status").textContent="";
+  document.getElementById("li-remove-input").value="";
+  document.getElementById("li-remove-reason").value="";
+}
+function backLiLeads(){document.getElementById("li-panel").style.display="none";document.getElementById("li-names").style.display="block";liSel=null;}
+async function claimLiLeads(){
+  if(!liSel)return;
+  const count=v("li-count");
+  const statusEl=document.getElementById("li-claim-status");
+  const resultEl=document.getElementById("li-claim-result");
+  statusEl.textContent="Claiming leads…";resultEl.innerHTML="";
+  try{
+    const fd=new FormData();fd.append("type","claimlinkedinleads");
+    fd.append("data",JSON.stringify({name:liSel,count:count,passcode:getLiPasscode()}));
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+    const data=await res.json();
+    if(!data.success){statusEl.textContent="Error: "+data.error;if((data.error||"").indexOf("passcode")>-1){setLiPasscode("");liShowGateOrUnlocked();}return;}
+    if(data.repeat){
+      statusEl.innerHTML='⚠ You already claimed these '+data.count+' lead(s) about '+data.claimedAgo+' min ago — here they are again so nothing gets missed. (Claim again later for a fresh batch.)';
+    }else{
+      statusEl.textContent="Claimed "+data.count+" lead(s).";
+    }
+    if(data.count>0){
+      const joined=data.leads.join("\n");
+      resultEl.innerHTML='<div style="margin:10px 0;">'+
+        '<label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">Click the box below, then Copy — then paste straight into a column in your Google Sheet.</label>'+
+        '<textarea id="li-leads-textarea" readonly onclick="this.select()" style="width:100%;min-height:160px;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);resize:vertical;">'+joined+'</textarea>'+
+        '<div class="row" style="margin-top:8px;">'+
+        '<button class="btn-primary" onclick="copyLiLeadsToClipboard()">Copy to clipboard</button>'+
+        '<span id="li-copy-status" style="font-size:12px;color:var(--green);"></span>'+
+        '</div></div>'+
+        '<table><thead><tr><th>#</th><th>Email</th></tr></thead><tbody>'+
+        data.leads.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+e+'</td></tr>').join("")+
+        '</tbody></table>';
+    }
+  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
+}
+async function copyLiLeadsToClipboard(){
+  const ta=document.getElementById("li-leads-textarea");
+  const statusEl=document.getElementById("li-copy-status");
+  if(!ta)return;
+  try{
+    await navigator.clipboard.writeText(ta.value);
+    statusEl.textContent="Copied!";
+  }catch(e){
+    ta.select();
+    try{document.execCommand("copy");statusEl.textContent="Copied!";}
+    catch(e2){statusEl.textContent="Couldn't copy — select the text manually.";}
+  }
+  setTimeout(()=>{statusEl.textContent="";},2000);
+}
+async function removeLiLeadsUI(){
+  const input=v("li-remove-input");
+  const statusEl=document.getElementById("li-remove-status");
+  if(!input.trim()){statusEl.textContent="Paste at least one email or domain first.";return;}
+  statusEl.textContent="Removing…";
+  try{
+    const fd=new FormData();fd.append("type","removelinkedinleads");
+    fd.append("data",JSON.stringify({input:input,name:liSel||"Unknown",reason:v("li-remove-reason"),passcode:getLiPasscode()}));
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+    const data=await res.json();
+    if(!data.success){statusEl.textContent="Error: "+data.error;if((data.error||"").indexOf("passcode")>-1){setLiPasscode("");liShowGateOrUnlocked();}return;}
+    statusEl.textContent=data.addedToDncCount+" added to Do Not Contact ("+data.removedFromLiLeadsCount+" matched an active LinkedIn lead and was marked removed, "+(data.removedFromLeadsCount||0)+" matched in the regular Leads list).";
+    document.getElementById("li-remove-input").value="";
+    document.getElementById("li-remove-reason").value="";
+  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
+}
 /* ===================== HOME HUB ===================== */
 const HOME_KEY="nsp_home_user";
 function getHomeUser(){try{return localStorage.getItem(HOME_KEY)||"";}catch(e){return "";}}
@@ -1064,6 +1231,7 @@ function renderHomeHub(){
     document.getElementById("hg-name").textContent="Hey "+name+" 👋";
     document.getElementById("hg-team").textContent=info?info.team:"";
     picker.style.display="none";hub.style.display="block";
+    document.getElementById("hub-li-leads").style.display=isLiLeadsAllowed(name)?"":"none";
     sub.textContent="Jump straight into what you need — your name carries over automatically.";
   }else{
     picker.style.display="block";hub.style.display="none";
@@ -1090,11 +1258,13 @@ function autoPickInContainer(containerId,name,fn){
 }
 function goHome(view){
   const name=getHomeUser();
+  if(view==="li-leads"&&!isLiLeadsAllowed(name))return;
   sv(view,document.getElementById('tab-'+view));
   if(!name)return;
   if(view==="eod")autoPickInContainer("eod-names",name,pickEodName);
   if(view==="booking")autoPickInContainer("bk-names",name,pickBkName);
   if(view==="leads")autoPickInContainer("leads-names",name,pickLeadsName);
+  if(view==="li-leads"){liShowGateOrUnlocked();if(getLiPasscode())autoPickInContainer("li-names",name,pickLiLeadsName);}
   if(view==="attendance"){
     document.getElementById("attName").value=name;
     onAttNameOrDateChange();
