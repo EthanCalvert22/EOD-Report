@@ -177,6 +177,22 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 .not-submitted .ac-status{color:var(--red);}
 .att-card .ac-time{font-size:11px;color:var(--text3);font-family:var(--mono);}
 .att-stats{font-size:12px;color:var(--text3);font-family:var(--mono);font-weight:400;margin-left:8px;text-transform:none;letter-spacing:0;}
+/* ---- Home stats bar ---- */
+.home-stats{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.stat-chip{flex:1;min-width:130px;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid var(--border2);border-radius:12px;padding:14px 16px;}
+.stat-chip .sc-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.stat-chip .sc-val{font-size:20px;font-weight:700;line-height:1.1;}
+.goal-track{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:8px;overflow:hidden;}
+.goal-fill{height:100%;border-radius:3px;background:var(--blue-light);transition:width .5s ease;}
+.goal-lbl{font-size:10px;color:var(--text3);margin-top:4px;}
+/* ---- Leaderboard team totals ---- */
+.lb-totals{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.ltc{flex:1;min-width:70px;text-align:center;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:10px;padding:9px 10px;}
+.ltc-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.ltc-val{font-size:22px;font-weight:700;}
+/* ---- Streak / PB in rankings ---- */
+.streak-badge{font-size:11px;color:#f6ad55;font-weight:700;margin-left:5px;}
+.pb-val{font-size:10px;color:var(--text3);margin-top:1px;}
 /* ---- Home hub ---- */
 .home-greet{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;margin-bottom:22px;box-shadow:var(--shadow-sm);}
 .home-greet .hg-name{font-size:18px;font-weight:700;}
@@ -213,6 +229,20 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
         <div class="hg-team" id="hg-team"></div>
       </div>
       <button class="btn-secondary" onclick="switchHomeUser()">Not you? Switch</button>
+    </div>
+    <div id="home-stats" style="display:none">
+      <div class="home-stats">
+        <div class="stat-chip">
+          <div class="sc-label">Your streak</div>
+          <div class="sc-val" id="hs-streak">—</div>
+        </div>
+        <div class="stat-chip">
+          <div class="sc-label">Team today · Goal: 13</div>
+          <div class="sc-val" id="hs-today">—</div>
+          <div class="goal-track"><div class="goal-fill" id="hs-fill" style="width:0%"></div></div>
+          <div class="goal-lbl" id="hs-lbl"></div>
+        </div>
+      </div>
     </div>
     <div class="hub-grid">
       <button class="hub-card" onclick="goHome('attendance')"><span class="hc-icon">✅</span><span class="hc-title">Attendance</span><span class="hc-sub">Mark present, or file VL/SL.</span></button>
@@ -409,6 +439,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <button data-p="month" class="active" onclick="setPeriod('month',this)">This Month</button>
       <button data-p="total" onclick="setPeriod('total',this)">All Time</button>
     </div>
+    <div class="lb-totals" id="lb-totals"></div>
     <div class="podrow" id="lb-podium"></div>
     <div class="sectlabel">Team race</div>
     <div class="teamgrid" id="lb-teamcards"></div>
@@ -416,7 +447,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div class="toprow" id="lb-top"></div>
     <button class="toggle-full" onclick="toggleFull()">▾ Show full individual rankings</button>
     <div id="lb-fullwrap" style="display:none">
-      <table><thead><tr><th>#</th><th>Associate</th><th>Team</th><th>Today</th><th>Week</th><th>Month</th><th>Total</th></tr></thead><tbody id="lb-ind"></tbody></table>
+      <table><thead><tr><th>#</th><th>Associate</th><th>Team</th><th id="lb-th-today">Today</th><th id="lb-th-week">Week</th><th id="lb-th-month">Month</th><th id="lb-th-total">Total</th></tr></thead><tbody id="lb-ind"></tbody></table>
     </div>
   </div>
 </div>
@@ -916,12 +947,13 @@ async function loadRollCall(){
   }catch(e){loading.textContent="Couldn't load roll call. Tap refresh to retry.";}
 }
 /* ===================== LEADERBOARD ===================== */
-let lbData=null,lbPeriod="month";
+let lbData=null,lbRaw=null,lbPeriod="month";
+const DAILY_GOAL=13;
 function loadLeaderboard(){
  document.getElementById("lb-loading").style.display="block";
  document.getElementById("lb-content").style.display="none";
  fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now()).then(r=>r.json())
-  .then(rows=>{lbData=computeStats(rows);renderLeaderboard();})
+  .then(rows=>{lbRaw=rows;lbData=computeStats(rows);renderLeaderboard();updateHomeStats();})
   .catch(()=>{document.getElementById("lb-loading").textContent="Couldn't load. Tap refresh to retry.";});
 }
 function computeStats(bookings){
@@ -943,6 +975,48 @@ function computeStats(bookings){
  });
  return Object.values(per);
 }
+/* -- Streak / PB helpers -- */
+function offsetDay(iso,d){const[y,m,dy]=iso.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,dy));dt.setUTCDate(dt.getUTCDate()+d);return dt.toISOString().slice(0,10);}
+function getWeekKey(iso){const[y,m,d]=iso.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));const dow=(dt.getUTCDay()+6)%7;dt.setUTCDate(dt.getUTCDate()-dow);return dt.toISOString().slice(0,10);}
+function computeStreak(raw,name){
+  const today=nyTodayISO();
+  const dates=[...new Set((raw||[]).filter(b=>b.name===name&&/^\d{4}-\d{2}-\d{2}$/.test(b.dateKey||'')).map(b=>b.dateKey))].sort().reverse();
+  if(!dates.length)return 0;
+  const start=dates[0]===today?today:dates[0]===offsetDay(today,-1)?offsetDay(today,-1):null;
+  if(!start)return 0;
+  let n=0,exp=start;
+  for(const d of dates){if(d===exp){n++;exp=offsetDay(exp,-1);}else break;}
+  return n;
+}
+function computePB(raw,name,period){
+  const mine=(raw||[]).filter(b=>b.name===name&&/^\d{4}-\d{2}-\d{2}$/.test(b.dateKey||''));
+  if(!mine.length)return 0;
+  const cnt={};
+  mine.forEach(b=>{
+    const k=period==='week'?getWeekKey(b.dateKey):period==='month'?b.dateKey.slice(0,7):b.dateKey;
+    cnt[k]=(cnt[k]||0)+1;
+  });
+  return Math.max(...Object.values(cnt));
+}
+function updateHomeStats(){
+  const name=getHomeUser();
+  const statsDiv=document.getElementById('home-stats');
+  if(!name||!lbRaw){if(statsDiv)statsDiv.style.display='none';return;}
+  const today=nyTodayISO();
+  const todayTotal=(lbRaw||[]).filter(b=>b.dateKey===today).length;
+  const streak=computeStreak(lbRaw,name);
+  statsDiv.style.display='block';
+  document.getElementById('hs-streak').textContent=streak>0?'🔥 '+streak+(streak===1?' day':' days'):'Start your streak today!';
+  document.getElementById('hs-today').textContent=todayTotal+' / '+DAILY_GOAL;
+  const pct=Math.min(100,Math.round(todayTotal/DAILY_GOAL*100));
+  document.getElementById('hs-fill').style.width=pct+'%';
+  document.getElementById('hs-lbl').textContent=todayTotal>=DAILY_GOAL?'🎯 Goal reached!':(DAILY_GOAL-todayTotal)+' more to hit today\'s goal';
+}
+function loadHomeStatsIfNeeded(){
+  if(lbRaw){updateHomeStats();return;}
+  fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now()).then(r=>r.json())
+  .then(rows=>{lbRaw=rows;lbData=computeStats(rows);updateHomeStats();}).catch(()=>{});
+}
 function setPeriod(p,btn){lbPeriod=p;document.querySelectorAll("#lb-seg button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderLeaderboard();}
 function toggleFull(){const w=document.getElementById("lb-fullwrap");const btn=document.querySelector(".toggle-full");if(w.style.display==="none"){w.style.display="block";btn.textContent="▴ Hide full rankings";}else{w.style.display="none";btn.textContent="▾ Show full individual rankings";}}
 function renderLeaderboard(){
@@ -958,8 +1032,38 @@ function renderLeaderboard(){
  tArr.forEach((t,i)=>{const pct=Math.round(t[P]/maxT*100);const col=TEAMCOLORS[t.team]||"#4299E1";const d=document.createElement("div");d.className="tcard";d.innerHTML='<div class="tn">'+t.team+' <span class="rk">#'+(i+1)+'</span></div><div class="num">'+t[P]+'</div><div class="lbl">bookings</div><div class="track"><div class="fill" style="width:'+pct+'%;background:'+col+';"></div></div>';tc.appendChild(d);});
  const top=document.getElementById("lb-top");top.innerHTML="";
  byP.slice(0,3).forEach(p=>{const d=document.createElement("div");d.className="topchip";d.innerHTML='<div class="av">'+initials(p.name)+'</div><div><div class="tnm">'+p.name+'</div><div class="tsub">'+p.team+'</div></div><div class="tval">'+p[P]+'</div>';top.appendChild(d);});
+ // Team totals bar
+ const totals={today:0,week:0,month:0,total:0};
+ arr.forEach(p=>{totals.today+=p.today;totals.week+=p.week;totals.month+=p.month;totals.total+=p.total;});
+ document.getElementById('lb-totals').innerHTML=
+  [['Today',totals.today],['This Week',totals.week],['This Month',totals.month],['All Time',totals.total]]
+  .map(([l,v])=>'<div class="ltc"><div class="ltc-lbl">'+l+'</div><div class="ltc-val">'+v+'</div></div>').join('');
+ // Highlight active period column header
+ ['today','week','month','total'].forEach(k=>{
+   const th=document.getElementById('lb-th-'+k);
+   if(th)th.style.color=k===P?'var(--blue-light)':'';
+ });
  const ind=document.getElementById("lb-ind");ind.innerHTML="";
- byP.forEach((p,i)=>{const tr=document.createElement("tr");const rc=i<3?(" rank-"+(i+1)):"";tr.innerHTML='<td><span class="rank-num'+rc+'">'+(i+1)+'</span></td><td class="nm">'+p.name+'</td><td>'+p.team+'</td><td>'+p.today+'</td><td>'+p.week+'</td><td>'+p.month+'</td><td><b>'+p.total+'</b></td>';ind.appendChild(tr);});
+ byP.forEach((p,i)=>{
+  const streak=lbRaw?computeStreak(lbRaw,p.name):0;
+  const pb=lbRaw?computePB(lbRaw,p.name,P):0;
+  const rc=i<3?(' rank-'+(i+1)):'';
+  const streakHtml=streak>0?'<span class="streak-badge">🔥'+streak+'</span>':'';
+  function cell(val,isActive){
+    return isActive
+      ? '<td><b>'+val+'</b><div class="pb-val">PB '+pb+'</div></td>'
+      : '<td>'+val+'</td>';
+  }
+  const tr=document.createElement("tr");
+  tr.innerHTML='<td><span class="rank-num'+rc+'">'+(i+1)+'</span></td>'+
+   '<td class="nm">'+p.name+streakHtml+'</td>'+
+   '<td>'+p.team+'</td>'+
+   cell(p.today,P==='today')+
+   cell(p.week,P==='week')+
+   cell(p.month,P==='month')+
+   cell(p.total,P==='total');
+  ind.appendChild(tr);
+ });
  document.getElementById("lb-loading").style.display="none";
  document.getElementById("lb-content").style.display="block";
 }
@@ -1233,7 +1337,9 @@ function renderHomeHub(){
     picker.style.display="none";hub.style.display="block";
     document.getElementById("hub-li-leads").style.display=isLiLeadsAllowed(name)?"":"none";
     sub.textContent="Jump straight into what you need — your name carries over automatically.";
+    loadHomeStatsIfNeeded();
   }else{
+    document.getElementById("home-stats").style.display="none";
     picker.style.display="block";hub.style.display="none";
     sub.textContent="Pick your name once — then jump straight into attendance, bookings, leads, or your EOD from here.";
   }
