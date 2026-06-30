@@ -221,6 +221,21 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <h1>Welcome</h1>
   <p class="sub" id="home-sub">Pick your name once — then jump straight into attendance, bookings, leads, or your EOD from here.</p>
   <div class="banner" id="home-banner"></div>
+  <!-- Team stats panel — always visible on the picker page, hidden when a hub is open -->
+  <div id="home-team-panel" style="display:none">
+    <div class="home-stats">
+      <div class="stat-chip">
+        <div class="sc-label">Team Today · Goal 13</div>
+        <div class="sc-val" id="htp-today">—</div>
+        <div class="goal-track"><div class="goal-fill" id="htp-fill" style="width:0%"></div></div>
+        <div class="goal-lbl" id="htp-lbl"></div>
+      </div>
+      <div class="stat-chip" style="flex:2;min-width:200px;">
+        <div class="sc-label">🔥 Streak Leaders</div>
+        <div id="htp-streaks" style="font-size:13px;color:var(--text2);margin-top:6px;">Loading…</div>
+      </div>
+    </div>
+  </div>
   <div id="home-picker"></div>
   <div id="home-hub" style="display:none">
     <div class="home-greet">
@@ -1001,21 +1016,44 @@ function computePB(raw,name,period){
 function updateHomeStats(){
   const name=getHomeUser();
   const statsDiv=document.getElementById('home-stats');
-  if(!name||!lbRaw){if(statsDiv)statsDiv.style.display='none';return;}
+  if(!name||!lbRaw){if(statsDiv)statsDiv.style.display='none';}
+  else{
+    const today=nyTodayISO();
+    const todayTotal=(lbRaw||[]).filter(b=>b.dateKey===today).length;
+    const streak=computeStreak(lbRaw,name);
+    statsDiv.style.display='block';
+    document.getElementById('hs-streak').textContent=streak>0?'🔥 '+streak+(streak===1?' day':' days'):'Start your streak today!';
+    document.getElementById('hs-today').textContent=todayTotal+' / '+DAILY_GOAL;
+    const pct=Math.min(100,Math.round(todayTotal/DAILY_GOAL*100));
+    document.getElementById('hs-fill').style.width=pct+'%';
+    document.getElementById('hs-lbl').textContent=todayTotal>=DAILY_GOAL?'🎯 Goal reached!':(DAILY_GOAL-todayTotal)+' more to hit today\'s goal';
+  }
+  updateHomeTeamPanel();
+}
+function updateHomeTeamPanel(){
+  if(!lbRaw)return;
   const today=nyTodayISO();
   const todayTotal=(lbRaw||[]).filter(b=>b.dateKey===today).length;
-  const streak=computeStreak(lbRaw,name);
-  statsDiv.style.display='block';
-  document.getElementById('hs-streak').textContent=streak>0?'🔥 '+streak+(streak===1?' day':' days'):'Start your streak today!';
-  document.getElementById('hs-today').textContent=todayTotal+' / '+DAILY_GOAL;
   const pct=Math.min(100,Math.round(todayTotal/DAILY_GOAL*100));
-  document.getElementById('hs-fill').style.width=pct+'%';
-  document.getElementById('hs-lbl').textContent=todayTotal>=DAILY_GOAL?'🎯 Goal reached!':(DAILY_GOAL-todayTotal)+' more to hit today\'s goal';
+  const elT=document.getElementById('htp-today');if(elT)elT.textContent=todayTotal+' / '+DAILY_GOAL;
+  const fill=document.getElementById('htp-fill');if(fill)fill.style.width=pct+'%';
+  const lbl=document.getElementById('htp-lbl');if(lbl)lbl.textContent=todayTotal>=DAILY_GOAL?'🎯 Goal reached!':(DAILY_GOAL-todayTotal)+' more to hit today\'s goal';
+  // Streak leaders: compute for everyone, sort descending, show top 5
+  const people=[...new Set((lbRaw||[]).map(b=>b.name))];
+  const streaks=people.map(n=>({name:n,s:computeStreak(lbRaw,n)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
+  const se=document.getElementById('htp-streaks');
+  if(se){
+    if(streaks.length===0){se.textContent='No active streaks yet — be the first!';}
+    else{
+      const medals=['🥇','🥈','🥉'];
+      se.innerHTML=streaks.slice(0,5).map((x,i)=>'<span style="display:inline-block;margin:3px 10px 3px 0;white-space:nowrap">'+(medals[i]||'  ')+'<b>'+x.name+'</b> <span style="color:var(--text2)">'+x.s+(x.s===1?' day':' days')+'</span></span>').join('');
+    }
+  }
 }
 function loadHomeStatsIfNeeded(){
-  if(lbRaw){updateHomeStats();return;}
+  if(lbRaw){updateHomeStats();updateHomeTeamPanel();return;}
   fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now()).then(r=>r.json())
-  .then(rows=>{lbRaw=rows;lbData=computeStats(rows);updateHomeStats();}).catch(()=>{});
+  .then(rows=>{lbRaw=rows;lbData=computeStats(rows);updateHomeStats();updateHomeTeamPanel();}).catch(()=>{});
 }
 function setPeriod(p,btn){lbPeriod=p;document.querySelectorAll("#lb-seg button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderLeaderboard();}
 function toggleFull(){const w=document.getElementById("lb-fullwrap");const btn=document.querySelector(".toggle-full");if(w.style.display==="none"){w.style.display="block";btn.textContent="▴ Hide full rankings";}else{w.style.display="none";btn.textContent="▾ Show full individual rankings";}}
@@ -1330,31 +1368,37 @@ function renderHomeHub(){
   const picker=document.getElementById("home-picker");
   const hub=document.getElementById("home-hub");
   const sub=document.getElementById("home-sub");
+  const teamPanel=document.getElementById("home-team-panel");
   if(name){
     const info=ALL.find(x=>x.name===name);
     document.getElementById("hg-name").textContent="Hey "+name+" 👋";
     document.getElementById("hg-team").textContent=info?info.team:"";
     picker.style.display="none";hub.style.display="block";
+    if(teamPanel)teamPanel.style.display="none";
     document.getElementById("hub-li-leads").style.display=isLiLeadsAllowed(name)?"":"none";
     sub.textContent="Jump straight into what you need — your name carries over automatically.";
     loadHomeStatsIfNeeded();
   }else{
     document.getElementById("home-stats").style.display="none";
     picker.style.display="block";hub.style.display="none";
+    if(teamPanel){teamPanel.style.display="block";}
     sub.textContent="Pick your name once — then jump straight into attendance, bookings, leads, or your EOD from here.";
+    loadHomeStatsIfNeeded();
   }
 }
 // Switches to the Home view and always shows the full team picker — used by
-// the top-nav "Home" button and the in-page "← Home" links, so jumping Home
-// from mid-task always lands on the actual home page with everyone's name on
-// it, rather than silently resuming whichever person's hub was last open.
-// (renderHomeHub() is still used on first page load, so a returning user's
-// saved name is restored automatically when they first open the app.)
+// the top-nav "Home" button, the in-page "← Home" links, AND the initial
+// page load. The app always opens to the shared team picker (with streak
+// leaders + goal progress visible to all) rather than auto-loading whoever's
+// name was last saved on this device. Clicking your name still loads your hub.
 function showHomePicker(){
   sv("home",document.getElementById("tab-home"));
   document.getElementById("home-picker").style.display="block";
   document.getElementById("home-hub").style.display="none";
+  const teamPanel=document.getElementById("home-team-panel");
+  if(teamPanel)teamPanel.style.display="block";
   document.getElementById("home-sub").textContent="Pick your name once — then jump straight into attendance, bookings, leads, or your EOD from here.";
+  loadHomeStatsIfNeeded();
 }
 // Selects `name` inside a buildNames-driven chip container (containerId), then
 // calls fn(name, matchedButtonOrNull) — used so Home can drive other tabs.
@@ -1376,7 +1420,7 @@ function goHome(view){
     onAttNameOrDateChange();
   }
 }
-renderHomeHub();
+showHomePicker();
 /* ===================== HELPERS ===================== */
 function v(id){return document.getElementById(id).value;}
 function banner(id,kind,msg){const b=document.getElementById(id);b.className="banner "+kind;b.textContent=msg;}
