@@ -262,8 +262,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div class="hub-grid">
       <button class="hub-card" onclick="goHome('attendance')"><span class="hc-icon">✅</span><span class="hc-title">Attendance</span><span class="hc-sub">Mark present, or file VL/SL.</span></button>
       <button class="hub-card" onclick="goHome('booking')"><span class="hc-icon">📅</span><span class="hc-title">Log a Booking</span><span class="hc-sub">Counts automatically toward today's meetings.</span></button>
-      <button class="hub-card" onclick="goHome('leads')"><span class="hc-icon">📇</span><span class="hc-title">Leads &amp; Do Not Contact</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
-      <button class="hub-card" id="hub-li-leads" style="display:none;" onclick="goHome('li-leads')"><span class="hc-icon">📇</span><span class="hc-title">LinkedIn Leads</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
+      <button class="hub-card" id="hub-leads" onclick="goHome('leads')"><span class="hc-icon">📇</span><span class="hc-title">Leads &amp; Do Not Contact</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
+      <button class="hub-card" id="hub-li-leads" style="display:none;" onclick="goHome('li-leads')"><span class="hc-icon">🔗</span><span class="hc-title">LinkedIn Leads</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
       <button class="hub-card" onclick="goHome('eod')"><span class="hc-icon">📝</span><span class="hc-title">Submit EOD</span><span class="hc-sub">Log today's outreaches &amp; follow-ups.</span></button>
     </div>
   </div>
@@ -1375,7 +1375,9 @@ function renderHomeHub(){
     document.getElementById("hg-team").textContent=info?info.team:"";
     picker.style.display="none";hub.style.display="block";
     if(teamPanel)teamPanel.style.display="none";
-    document.getElementById("hub-li-leads").style.display=isLiLeadsAllowed(name)?"":"none";
+    const liAllowed=isLiLeadsAllowed(name);
+    document.getElementById("hub-li-leads").style.display=liAllowed?"":"none";
+    document.getElementById("hub-leads").style.display=liAllowed?"none":"";
     sub.textContent="Jump straight into what you need — your name carries over automatically.";
     loadHomeStatsIfNeeded();
   }else{
