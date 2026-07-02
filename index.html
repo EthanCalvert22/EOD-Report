@@ -383,7 +383,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
           <optgroup label="Mae's Team">
             <option>Mae</option><option>Jade</option><option>Lovely</option>
             <option>Ivony</option><option>Tony</option><option>Manuel</option>
-            <option>Clarence Barbs</option><option>Dayrain</option>
+            <option>Clarence Barbs</option><option>Dayrain</option><option>Charlot</option>
           </optgroup>
           <optgroup label="Sheena's Team">
             <option>Sheena</option><option>Pat</option><option>Anthony</option>
@@ -393,21 +393,17 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
           <optgroup label="Allen Marie's Team">
             <option>Allen Marie</option><option>Irene</option><option>Dominic</option>
             <option>Lorenz</option><option>Janrobin</option><option>Edd</option>
-            <option>Jonnie</option><option>Molit</option>
+            <option>Jonnie</option><option>Molit</option><option>Rey</option>
           </optgroup>
           <optgroup label="Jasper's Team">
             <option>Jasper</option><option>Riri</option><option>Ros</option>
             <option>Jameson</option><option>Jade Lumontad</option>
             <option>Hazel Mae Jeminez</option><option>Elmar Estrada</option><option>Goretti</option>
           </optgroup>
-          <optgroup label="Ethan's Team">
-            <option>Ethan</option><option>Kim</option><option>Ivy</option>
-            <option>Charlot</option><option>Rey</option><option>Rona</option>
-            <option>Charmaine Booc</option>
-          </optgroup>
           <optgroup label="Van's Team">
             <option>Van</option><option>Maru</option><option>Mylaine</option>
-            <option>Hiro Wayne</option>
+            <option>Kim</option><option>Ivy</option><option>Hiro Wayne</option>
+            <option>Rona</option><option>Charmaine Booc</option>
           </optgroup>
         </select>
       </div>
@@ -607,15 +603,14 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw9n1IzAnZO6J14EMmasZaJaDzNPG4cENzQhluMGEaMzl7FA7eEjYqyOZC9n2cVqc7Rng/exec";
-const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie","Van","Ethan"];
+const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie","Van"];
 const STRUCTURE=[
  {team:"Jesusa's team (Joe+)",   members:["Jesusa","Mark","Hervic","Alma","James Vaughn","Aiza","Michelle","Carina"]},
- {team:"Mae's team (Seb+)",      members:["Mae","Jade","Lovely","Ivony","Tony","Manuel","Clarence Barbs","Dayrain"]},
+ {team:"Mae's team (Seb+)",      members:["Mae","Jade","Lovely","Ivony","Tony","Manuel","Clarence Barbs","Dayrain","Charlot"]},
  {team:"Sheena's team (Adam+)",  members:["Sheena","Pat","Anthony","Ernst","Francis","King Lennard","Rica Rei","Jose Bendano"]},
- {team:"Allen Marie's team (LinkedIn+)", members:["Allen Marie","Irene","Dominic","Lorenz","Janrobin","Edd","Jonnie","Molit"]},
+ {team:"Allen Marie's team (LinkedIn+)", members:["Allen Marie","Irene","Dominic","Lorenz","Janrobin","Edd","Jonnie","Molit","Rey"]},
  {team:"Jasper's team (Josh+)",  members:["Jasper","Riri","Ros","Jameson","Jade Lumontad","Hazel Mae Jeminez","Elmar Estrada","Goretti"]},
- {team:"Ethan's team (Saul+)",   members:["Ethan","Kim","Ivy","Charlot","Rey","Rona","Charmaine Booc"]},
- {team:"Van's team (Luke+)",     members:["Van","Maru","Mylaine","Hiro Wayne"]},
+ {team:"Van's team (Luke+)",     members:["Van","Maru","Mylaine","Kim","Ivy","Hiro Wayne","Rona","Charmaine Booc"]},
 ];
 const ALL=[];STRUCTURE.forEach(g=>g.members.forEach(m=>ALL.push({name:m,team:g.team})));
 const TEAMCOLORS={
@@ -624,7 +619,6 @@ const TEAMCOLORS={
  "Sheena's team (Adam+)": "#1D9E75",
  "Allen Marie's team (LinkedIn+)":"#4299E1",
  "Jasper's team (Josh+)": "#7F77DD",
- "Ethan's team (Saul+)":  "#D85A30",
  "Van's team (Luke+)":    "#378ADD",
 };
 // Each "capital strategy" team has a handful of core VP-team members (the first
@@ -641,8 +635,7 @@ const ROUNDROBIN_INFO={
  "Mae's team (Seb+)":     {coreCount:4},
  "Sheena's team (Adam+)": {coreCount:3},
  "Jasper's team (Josh+)": {coreCount:3},
- "Ethan's team (Saul+)":  {coreCount:4},
- "Van's team (Luke+)":    {coreCount:3},
+ "Van's team (Luke+)":    {coreCount:5},
 };
 function isRoundRobinEligible(name){
  const g=STRUCTURE.find(x=>x.team===ALL.find(a=>a.name===name).team);
@@ -778,7 +771,7 @@ function renderMyBookingsToday(name){
   myBookingsToday.forEach(b=>{
     const d=document.createElement("div");d.className="bkrow";
     const tag=b.eodCredit?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(for Saul — credited to '+b.eodCredit+')</span>'
-      :b.roundRobinPool?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(Round Robin pool — not credited to a teammate)</span>':'';
+      :b.roundRobinPool?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(Round Robin pool)</span>':'';
     d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+tag+'</span>'+
       '<button class="bkdel" title="Remove this booking" onclick="deleteBooking(\''+encodeURIComponent(b.timestamp)+'\',\''+encodeURIComponent(name)+'\')">✕</button>';
     list.appendChild(d);
