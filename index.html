@@ -751,6 +751,13 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
           <p class="sub" style="margin:-4px 0 14px;font-size:12px;">Confirm who gets the booking — it goes straight to their leaderboard and EOD.</p>
           <div id="bl-claims-review"><div class="bl-empty">No pending claims to review for this day.</div></div>
         </div>
+        <div class="form-card" style="margin-top:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="margin:0;">Today's Confirmed Bookings</h3>
+            <button class="refresh-btn" onclick="blLoadTodayBookings()">↻</button>
+          </div>
+          <div id="bl-today-bookings"><div class="loading">Loading…</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1835,6 +1842,7 @@ async function blVerifyAdmin(){
     document.getElementById("bl-lead-date").value = nyTodayISO();
     statusEl.textContent = "";
     renderBlClaimsReview();
+    blLoadTodayBookings();
   } catch(e){ statusEl.textContent = "Request failed."; }
   blAdminBusy = false;
 }
@@ -1884,6 +1892,42 @@ function renderBlClaimsReview(){
       '</div>';
   }).join('<div class="section-divider" style="margin:12px 0;"></div>');
 }
+async function blLoadTodayBookings(){
+  const el = document.getElementById("bl-today-bookings");
+  if(!el) return;
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const res = await fetch(SCRIPT_URL + "?action=allbookingstoday&t=" + Date.now());
+    const rows = await res.json();
+    if(!rows.length){ el.innerHTML = '<div class="bl-empty">No bookings confirmed today yet.</div>'; return; }
+    el.innerHTML = rows.map(b => {
+      const ts = encodeURIComponent(b.timestamp);
+      const nm = encodeURIComponent(b.name);
+      const label = b.roundRobinPool ? 'Round Robin' : (b.eodCredit ? 'Credit → ' + b.eodCredit : b.name);
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;margin-bottom:6px;gap:8px;flex-wrap:wrap;">' +
+        '<div>' +
+          '<span style="font-size:13px;font-weight:600;color:var(--text);">' + escapeHtml(b.name) + '</span>' +
+          '<span style="font-size:11px;color:var(--text3);margin-left:8px;">' + escapeHtml(b.email || '—') + '</span>' +
+        '</div>' +
+        '<button onclick="blDeleteBooking(\'' + ts + '\',\'' + nm + '\')" style="background:rgba(252,129,129,0.15);border:1px solid rgba(252,129,129,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">🗑️ Delete</button>' +
+      '</div>';
+    }).join("");
+  } catch(e){ el.innerHTML = '<div class="bl-empty">Couldn\'t load bookings.</div>'; }
+}
+async function blDeleteBooking(encTs, encName){
+  const ts = decodeURIComponent(encTs);
+  const name = decodeURIComponent(encName);
+  if(!confirm("Delete booking for " + name + "?\n\nThis removes it from their leaderboard and EOD count.")) return;
+  try {
+    const fd = new FormData();
+    fd.append("type","deletebooking");
+    fd.append("data", JSON.stringify({ timestamp: ts, name: name }));
+    const res = await fetch(SCRIPT_URL, { method:"POST", body:fd });
+    await res.json();
+    banner("bl-banner","ok","Booking deleted for " + name + ".");
+    blLoadTodayBookings();
+  } catch(e){ banner("bl-banner","err","Delete failed — check connection."); }
+}
 async function blConfirmClaim(leadId, encNames){
   if(!blAdminUnlocked) return;
   const names = JSON.parse(decodeURIComponent(encNames));
@@ -1897,6 +1941,7 @@ async function blConfirmClaim(leadId, encNames){
     if(!data.success){ banner("bl-banner","err","Error: " + (data.error || "Unknown")); return; }
     banner("bl-banner","ok","Booking confirmed for " + names.join(" & ") + "! Added to their leaderboard. 🎉");
     loadBookedLeads();
+    blLoadTodayBookings();
   } catch(e){ banner("bl-banner","err","Request failed — check connection."); }
 }
 async function blRemoveClaim(leadId, encName){
