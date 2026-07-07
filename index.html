@@ -262,8 +262,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div class="hub-grid">
       <button class="hub-card" onclick="goHome('attendance')"><span class="hc-icon">✅</span><span class="hc-title">Attendance</span><span class="hc-sub">Mark present, or file VL/SL.</span></button>
       <button class="hub-card" onclick="goHome('booking')"><span class="hc-icon">📅</span><span class="hc-title">Log a Booking</span><span class="hc-sub">Counts automatically toward today's meetings.</span></button>
-      <button class="hub-card" id="hub-leads" onclick="goHome('leads')"><span class="hc-icon">📇</span><span class="hc-title">Leads &amp; Do Not Contact</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
-      <button class="hub-card" id="hub-li-leads" style="display:none;" onclick="goHome('li-leads')"><span class="hc-icon">🔗</span><span class="hc-title">LinkedIn Leads</span><span class="hc-sub">Claim leads or remove a contact.</span></button>
+      <button class="hub-card" id="hub-leads" onclick="goHome('leads')"><span class="hc-icon">📇</span><span class="hc-title">Get Leads</span><span class="hc-sub">Claim your next batch of leads.</span></button>
+      <button class="hub-card" id="hub-li-leads" style="display:none;" onclick="goHome('li-leads')"><span class="hc-icon">🔗</span><span class="hc-title">Get Leads</span><span class="hc-sub">Claim your next LinkedIn leads batch.</span></button>
+      <button class="hub-card" onclick="goHome('dnc')"><span class="hc-icon">🚫</span><span class="hc-title">Do Not Contact</span><span class="hc-sub">Remove a contact from all lead pools.</span></button>
       <button class="hub-card" onclick="goHome('eod')"><span class="hc-icon">📝</span><span class="hc-title">Submit EOD</span><span class="hc-sub">Log today's outreaches &amp; follow-ups.</span></button>
     </div>
   </div>
@@ -541,6 +542,28 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div id="ld-dnc-results" style="margin-top:10px;"></div>
     </div>
     <div class="row"><button class="btn-secondary" onclick="backLeads()">← Back</button></div>
+  </div>
+</div>
+<!-- UNIFIED DO NOT CONTACT — removes from both Leads and LinkedIn Leads pools -->
+<div class="view" id="v-dnc">
+  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
+  <h1>Do Not Contact</h1>
+  <p class="sub">Removes the contact from all lead pools (regular and LinkedIn) and adds them to the shared Do Not Contact list.</p>
+  <div class="banner" id="dnc-banner"></div>
+  <div id="dnc-panel">
+    <div class="form-card">
+      <div class="field full">
+        <label>Email addresses to remove</label>
+        <textarea id="dnc-input" placeholder="jane@company.com&#10;john@other.com&#10;@blockedco.com" style="min-height:120px;"></textarea>
+      </div>
+      <div class="field full">
+        <label>Reason</label>
+        <input type="text" id="dnc-reason" placeholder="e.g. Unsubscribed, Bounced, Wrong contact">
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn-danger" onclick="submitUnifiedDNC()">Remove from all lead pools</button>
+    </div>
   </div>
 </div>
 <!-- LINKEDIN LEADS (passcode-gated, separate pool from the regular Leads tab) -->
@@ -1237,6 +1260,24 @@ async function runDNCSearch(query){
       '</tbody></table>';
   }catch(e){el.innerHTML='Search failed.';}
 }
+/* ===================== UNIFIED DNC ===================== */
+async function submitUnifiedDNC(){
+  const input=document.getElementById('dnc-input').value.trim();
+  const reason=document.getElementById('dnc-reason').value.trim();
+  const name=getHomeUser()||'Unknown';
+  if(!input){banner('dnc-banner','err','Please enter at least one email address.');return;}
+  banner('dnc-banner','ok','Removing…');
+  try{
+    const fd=new FormData();fd.append('type','removednc');
+    fd.append('data',JSON.stringify({input:input,name:name,reason:reason||'Manual removal'}));
+    const res=await fetch(SCRIPT_URL,{method:'POST',body:fd});
+    const data=await res.json();
+    if(!data.success){banner('dnc-banner','err','Error: '+(data.error||'Unknown error'));return;}
+    document.getElementById('dnc-input').value='';
+    document.getElementById('dnc-reason').value='';
+    banner('dnc-banner','ok','Done — '+data.addedToDncCount+' contact(s) added to Do Not Contact and removed from all lead pools.');
+  }catch(e){banner('dnc-banner','err','Request failed — check your connection and try again.');}
+}
 /* ===================== LINKEDIN LEADS (passcode-gated) ===================== */
 // Only the original LinkedIn lead-list group gets this option at all — not
 // everyone on Allen Marie's team, and nobody else even sees the hub card.
@@ -1413,6 +1454,7 @@ function goHome(view){
   if(view==="booking")autoPickInContainer("bk-names",name,pickBkName);
   if(view==="leads")autoPickInContainer("leads-names",name,pickLeadsName);
   if(view==="li-leads"){liShowGateOrUnlocked();if(getLiPasscode())autoPickInContainer("li-names",name,pickLiLeadsName);}
+  if(view==="dnc"){document.getElementById('dnc-input').value='';document.getElementById('dnc-reason').value='';document.getElementById('dnc-banner').className='banner';document.getElementById('dnc-banner').textContent='';}
   if(view==="attendance"){
     document.getElementById("attName").value=name;
     onAttNameOrDateChange();
