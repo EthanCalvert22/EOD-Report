@@ -513,25 +513,38 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div><h1>Admin Dashboard</h1><p class="sub">Today's EOD activity, live from the sheet.</p></div>
     <button class="refresh-btn" onclick="loadAdmin()">↻ refresh</button>
   </div>
-  <div id="ad-loading" class="loading">Loading…</div>
-  <div id="ad-content" style="display:none">
-    <div class="metrics">
-      <div class="metric acc"><div class="l">Total Outreaches</div><div class="v" id="ad-emails">0</div></div>
-      <div class="metric grn"><div class="l">Meetings (EOD)</div><div class="v" id="ad-mtg">0</div></div>
-      <div class="metric"><div class="l">Follow-ups</div><div class="v" id="ad-fu">0</div></div>
-      <div class="metric"><div class="l">Submitted</div><div class="v" id="ad-sub">0</div></div>
+  <!-- Top section: stats + leave panel side by side -->
+  <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+    <div style="flex:1;min-width:260px;">
+      <div id="ad-loading" class="loading">Loading…</div>
+      <div id="ad-content" style="display:none">
+        <div class="metrics">
+          <div class="metric acc"><div class="l">Total Outreaches</div><div class="v" id="ad-emails">0</div></div>
+          <div class="metric grn"><div class="l">Meetings (EOD)</div><div class="v" id="ad-mtg">0</div></div>
+          <div class="metric"><div class="l">Follow-ups</div><div class="v" id="ad-fu">0</div></div>
+          <div class="metric"><div class="l">Submitted</div><div class="v" id="ad-sub">0</div></div>
+        </div>
+      </div>
     </div>
-    <table><thead><tr><th>Name</th><th>Team</th><th>Outreaches</th><th>Meetings</th><th>Follow-ups</th><th>Status</th></tr></thead><tbody id="ad-body"></tbody></table>
+    <!-- Leave panel — visible to all; delete enabled after PIN -->
+    <div style="min-width:220px;max-width:300px;flex-shrink:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;">🗓️ On Leave</span>
+        <button class="refresh-btn" onclick="loadLeaveEntries()">↻</button>
+      </div>
+      <div class="banner" id="leave-mgmt-banner" style="margin-bottom:6px;font-size:12px;"></div>
+      <div id="leave-entries-list"><div class="loading" style="font-size:12px;">Loading…</div></div>
+      <div id="admin-leave-gate" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="password" id="admin-leave-pin" placeholder="PIN to delete" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--mono);width:120px;">
+        <button class="btn-secondary" style="padding:5px 10px;font-size:11px;" onclick="verifyAdminLeave()">Unlock</button>
+        <span id="admin-leave-pin-status" style="font-size:11px;color:var(--text3);"></span>
+      </div>
+      <input type="hidden" id="leave-del-pin">
+    </div>
   </div>
-  <!-- Manage Leave section -->
-  <div style="margin-top:22px;">
-    <div class="bl-section-hdr">🗓️ Manage Leave Entries <button class="refresh-btn" style="margin-left:10px;" onclick="loadLeaveEntries()">↻ refresh</button></div>
-    <div class="banner" id="leave-mgmt-banner" style="margin-top:8px;"></div>
-    <div id="leave-entries-list" style="margin-top:8px;"><div class="loading">Loading…</div></div>
-    <!-- PIN gate for deleting -->
-    <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
-      <input type="password" id="leave-del-pin" placeholder="Admin PIN" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;color:var(--text);font-size:13px;font-family:var(--mono);width:160px;">
-    </div>
+  <!-- EOD table below, full width -->
+  <div id="ad-table-wrap" style="display:none;margin-top:16px;">
+    <table><thead><tr><th>Name</th><th>Team</th><th>Outreaches</th><th>Meetings</th><th>Follow-ups</th><th>Status</th></tr></thead><tbody id="ad-body"></tbody></table>
   </div>
 </div>
 <!-- LEADS -->
@@ -1275,7 +1288,23 @@ function loadAdmin(){
  fetch(SCRIPT_URL+"?action=eodtoday&t="+Date.now()).then(r=>r.json())
   .then(data=>renderAdmin(data))
   .catch(()=>{document.getElementById("ad-loading").textContent="Couldn't load. Tap refresh to retry.";});
- loadLeaveEntries();
+}
+let adminLeavePin = "";
+async function verifyAdminLeave(){
+  const pin = (document.getElementById("admin-leave-pin").value || "").trim();
+  const statusEl = document.getElementById("admin-leave-pin-status");
+  if(!pin){ statusEl.textContent = "Enter PIN first."; return; }
+  statusEl.textContent = "Checking…";
+  try {
+    const res = await fetch(SCRIPT_URL + "?action=checkadminpin&code=" + encodeURIComponent(pin) + "&t=" + Date.now());
+    const data = await res.json();
+    if(!data.ok){ statusEl.textContent = "Incorrect PIN."; return; }
+    adminLeavePin = pin;
+    document.getElementById("leave-del-pin").value = pin;
+    document.getElementById("admin-leave-gate").style.display = "none";
+    statusEl.textContent = "🔓 Delete enabled";
+    loadLeaveEntries(); // re-render with delete buttons visible
+  } catch(e){ statusEl.textContent = "Request failed."; }
 }
 async function loadLeaveEntries(){
   const el = document.getElementById("leave-entries-list");
@@ -1285,16 +1314,22 @@ async function loadLeaveEntries(){
     const res = await fetch(SCRIPT_URL + "?action=getleaveentries&t=" + Date.now());
     const data = await res.json();
     const entries = (data && data.entries) ? data.entries : [];
-    if(!entries.length){ el.innerHTML = '<div class="bl-empty">No current or upcoming VL/SL entries.</div>'; return; }
-    el.innerHTML = entries.map(e =>
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;margin-bottom:6px;gap:10px;flex-wrap:wrap;">' +
-        '<span style="font-size:13px;font-weight:600;color:var(--text);">' + escapeHtml(e.name) + '</span>' +
-        '<span style="font-size:12px;color:var(--text2);">' + escapeHtml(e.date) + '</span>' +
-        '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:' + (e.status==='VL'?'rgba(246,173,85,0.18)':'rgba(66,153,225,0.18)') + ';color:' + (e.status==='VL'?'var(--accent)':'var(--blue-light)') + ';">' + e.status + '</span>' +
-        (e.notes ? '<span style="font-size:12px;color:var(--text3);">' + escapeHtml(e.notes) + '</span>' : '') +
-        '<button onclick="deleteLeaveEntry(\'' + escapeHtml(e.name) + '\',\'' + escapeHtml(e.date) + '\')" style="background:rgba(252,129,129,0.15);border:1px solid rgba(252,129,129,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">🗑️ Delete</button>' +
-      '</div>'
-    ).join("");
+    if(!entries.length){ el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0;">No current or upcoming leave.</div>'; return; }
+    el.innerHTML = entries.map(e => {
+      const delBtn = adminLeavePin
+        ? '<button onclick="deleteLeaveEntry(\'' + escapeHtml(e.name) + '\',\'' + escapeHtml(e.date) + '\')" style="background:rgba(252,129,129,0.12);border:1px solid rgba(252,129,129,0.25);color:var(--red);border-radius:5px;padding:3px 7px;font-size:10px;cursor:pointer;margin-left:4px;">✕</button>'
+        : '';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;margin-bottom:5px;gap:6px;">' +
+        '<div style="min-width:0;">' +
+          '<span style="font-size:12px;font-weight:600;color:var(--text);">' + escapeHtml(e.name) + '</span>' +
+          '<span style="font-size:11px;color:var(--text3);margin-left:6px;">' + escapeHtml(e.date) + '</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">' +
+          '<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:' + (e.status==='VL'?'rgba(246,173,85,0.18)':'rgba(66,153,225,0.18)') + ';color:' + (e.status==='VL'?'var(--accent)':'var(--blue-light)') + ';">' + e.status + '</span>' +
+          delBtn +
+        '</div>' +
+      '</div>';
+    }).join("");
   } catch(e){ el.innerHTML = '<div class="bl-empty">Couldn\'t load leave entries.</div>'; }
 }
 async function deleteLeaveEntry(name, date){
@@ -1336,6 +1371,8 @@ function renderAdmin(data){
  document.getElementById("ad-emails").textContent=te;document.getElementById("ad-mtg").textContent=tm;
  document.getElementById("ad-fu").textContent=tf;document.getElementById("ad-sub").textContent=ts+"/"+ALL.length;
  document.getElementById("ad-loading").style.display="none";document.getElementById("ad-content").style.display="block";
+ document.getElementById("ad-table-wrap").style.display="block";
+ loadLeaveEntries();
 }
 /* ===================== LEADS ===================== */
 let leadsSel=null;
@@ -1779,8 +1816,14 @@ function blLeadCardHtml(l, myName, claimName){
       actionHtml = '<span style="font-size:12px;color:var(--text3);">Pick your name on the Home tab to claim.</span>';
     }
   }
+  const retractBtn = blAdminUnlocked
+    ? '<button onclick="blRetractLead(\'' + l.leadId + '\')" style="background:rgba(252,129,129,0.12);border:1px solid rgba(252,129,129,0.25);color:var(--red);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;margin-left:6px;">🗑️ Retract</button>'
+    : '';
+  const rrPoolBtn = (blAdminUnlocked && l.status !== 'assigned')
+    ? '<button onclick="blCreditToPool(\'' + l.leadId + '\')" style="background:rgba(66,153,225,0.12);border:1px solid rgba(66,153,225,0.25);color:var(--blue-light,#63b3ed);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;margin-left:6px;">→ RR Pool</button>'
+    : '';
   return '<div class="bl-lead-card ' + l.status + '">' +
-    '<div class="bl-badges"><span class="bl-type-badge ' + typeCls + '">' + typeLabel + '</span><span class="bl-status-badge">' + statusLabel + '</span></div>' +
+    '<div class="bl-badges"><span class="bl-type-badge ' + typeCls + '">' + typeLabel + '</span><span class="bl-status-badge">' + statusLabel + '</span>' + retractBtn + rrPoolBtn + '</div>' +
     emailHtml +
     '<div class="bl-meta">Posted ' + escapeHtml(l.submittedAt || l.date) + '</div>' +
     claimantsHtml +
@@ -1891,6 +1934,40 @@ function renderBlClaimsReview(){
       (l.claimants.length > 1 ? '<div style="margin-top:8px;"><button class="btn-primary" style="padding:6px 14px;font-size:12px;" onclick="blConfirmClaim(\'' + l.leadId + '\',' + encAll + ')">✓ Confirm all (' + l.claimants.length + ')</button></div>' : '') +
       '</div>';
   }).join('<div class="section-divider" style="margin:12px 0;"></div>');
+}
+async function blRetractLead(leadId){
+  if(!blAdminUnlocked) return;
+  if(!confirm("Retract this lead entirely? It will be removed from the Booked Leads sheet and associates will no longer see it.")) return;
+  try {
+    const fd = new FormData();
+    fd.append("type","deletebookedlead");
+    fd.append("data", JSON.stringify({ leadId: leadId, adminPin: blAdminPinStored }));
+    const res = await fetch(SCRIPT_URL, { method:"POST", body:fd });
+    const data = await res.json();
+    if(data.success){
+      banner("bl-banner","ok","Lead retracted.");
+      loadBookedLeads();
+    } else {
+      banner("bl-banner","err", data.error || "Retract failed.");
+    }
+  } catch(e){ banner("bl-banner","err","Request failed."); }
+}
+async function blCreditToPool(leadId){
+  if(!blAdminUnlocked) return;
+  if(!confirm("Credit this lead to the RR Pool? It will count toward today's shared pool total — no individual will be credited.")) return;
+  try {
+    const fd = new FormData();
+    fd.append("type","credittopool");
+    fd.append("data", JSON.stringify({ leadId: leadId, adminPin: blAdminPinStored }));
+    const res = await fetch(SCRIPT_URL, { method:"POST", body:fd });
+    const data = await res.json();
+    if(data.success){
+      banner("bl-banner","ok","✓ Lead credited to RR Pool.");
+      loadBookedLeads();
+    } else {
+      banner("bl-banner","err", data.error || "Failed to credit pool.");
+    }
+  } catch(e){ banner("bl-banner","err","Request failed — check connection."); }
 }
 async function blLoadTodayBookings(){
   const el = document.getElementById("bl-today-bookings");
