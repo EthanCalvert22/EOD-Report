@@ -245,6 +245,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div class="nav-tabs">
     <button class="nav-tab active" id="tab-home" onclick="showHomePicker()">Home</button>
     <button class="nav-tab" id="tab-leaderboard" onclick="sv('leaderboard',this)">Leaderboard</button>
+    <button class="nav-tab" id="tab-bookings" onclick="sv('booked-leads',this)">📅 Bookings</button>
     <button class="nav-tab" id="tab-docs" onclick="sv('docs',this)">Docs</button>
     <button class="nav-tab" id="tab-admin" onclick="sv('admin',this)">Admin</button>
   </div>
@@ -522,6 +523,17 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
     <table><thead><tr><th>Name</th><th>Team</th><th>Outreaches</th><th>Meetings</th><th>Follow-ups</th><th>Status</th></tr></thead><tbody id="ad-body"></tbody></table>
   </div>
+  <!-- Manage Leave section -->
+  <div style="margin-top:22px;">
+    <div class="bl-section-hdr">🗓️ Manage Leave Entries <button class="refresh-btn" style="margin-left:10px;" onclick="loadLeaveEntries()">↻ refresh</button></div>
+    <div class="banner" id="leave-mgmt-banner" style="margin-top:8px;"></div>
+    <div id="leave-entries-list" style="margin-top:8px;"><div class="loading">Loading…</div></div>
+    <!-- PIN gate for deleting -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
+      <input type="password" id="leave-del-pin" placeholder="Admin PIN" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;color:var(--text);font-size:13px;font-family:var(--mono);width:160px;">
+      <span style="font-size:12px;color:var(--text3);">Enter PIN then tap 🗑️ next to an entry to delete it.</span>
+    </div>
+  </div>
 </div>
 <!-- LEADS -->
 <div class="view" id="v-leads">
@@ -660,7 +672,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 <!-- BOOKED LEADS CLAIMING -->
 <div class="view" id="v-booked-leads">
-  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
   <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
     <div><h1>🎯 Claim a Booking</h1><p class="sub">Available booked leads — claim yours when one comes in.</p></div>
     <button class="refresh-btn" onclick="loadBookedLeads()">↻ refresh</button>
@@ -1126,14 +1137,20 @@ function computeStats(bookings){
 /* -- Streak / PB helpers -- */
 function offsetDay(iso,d){const[y,m,dy]=iso.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,dy));dt.setUTCDate(dt.getUTCDate()+d);return dt.toISOString().slice(0,10);}
 function getWeekKey(iso){const[y,m,d]=iso.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));const dow=(dt.getUTCDay()+6)%7;dt.setUTCDate(dt.getUTCDate()-dow);return dt.toISOString().slice(0,10);}
+function isWeekendISO(iso){const[y,m,d]=iso.split('-').map(Number);const dow=new Date(Date.UTC(y,m-1,d)).getUTCDay();return dow===0||dow===6;}
+function prevWorkday(iso){let d=offsetDay(iso,-1);while(isWeekendISO(d))d=offsetDay(d,-1);return d;}
+function lastWorkdayOnOrBefore(iso){return isWeekendISO(iso)?prevWorkday(iso):iso;}
 function computeStreak(raw,name){
   const today=nyTodayISO();
   const dates=[...new Set((raw||[]).filter(b=>b.name===name&&/^\d{4}-\d{2}-\d{2}$/.test(b.dateKey||'')).map(b=>b.dateKey))].sort().reverse();
   if(!dates.length)return 0;
-  const start=dates[0]===today?today:dates[0]===offsetDay(today,-1)?offsetDay(today,-1):null;
+  // Allow streak to start from the most recent workday (handles weekends — Mon looks back to Fri)
+  const todayWD=lastWorkdayOnOrBefore(today);
+  const start=dates[0]===todayWD?todayWD:dates[0]===prevWorkday(todayWD)?prevWorkday(todayWD):null;
   if(!start)return 0;
   let n=0,exp=start;
-  for(const d of dates){if(d===exp){n++;exp=offsetDay(exp,-1);}else break;}
+  // Step backwards by workday so weekends don't break the chain
+  for(const d of dates){if(d===exp){n++;exp=prevWorkday(exp);}else break;}
   return n;
 }
 function computePB(raw,name,period){
@@ -1245,6 +1262,45 @@ function loadAdmin(){
  fetch(SCRIPT_URL+"?action=eodtoday&t="+Date.now()).then(r=>r.json())
   .then(data=>renderAdmin(data))
   .catch(()=>{document.getElementById("ad-loading").textContent="Couldn't load. Tap refresh to retry.";});
+ loadLeaveEntries();
+}
+async function loadLeaveEntries(){
+  const el = document.getElementById("leave-entries-list");
+  if(!el) return;
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const res = await fetch(SCRIPT_URL + "?action=getleaveentries&t=" + Date.now());
+    const data = await res.json();
+    const entries = (data && data.entries) ? data.entries : [];
+    if(!entries.length){ el.innerHTML = '<div class="bl-empty">No current or upcoming VL/SL entries.</div>'; return; }
+    el.innerHTML = entries.map(e =>
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;margin-bottom:6px;gap:10px;flex-wrap:wrap;">' +
+        '<span style="font-size:13px;font-weight:600;color:var(--text);">' + escapeHtml(e.name) + '</span>' +
+        '<span style="font-size:12px;color:var(--text2);">' + escapeHtml(e.date) + '</span>' +
+        '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:' + (e.status==='VL'?'rgba(246,173,85,0.18)':'rgba(66,153,225,0.18)') + ';color:' + (e.status==='VL'?'var(--accent)':'var(--blue-light)') + ';">' + e.status + '</span>' +
+        (e.notes ? '<span style="font-size:12px;color:var(--text3);">' + escapeHtml(e.notes) + '</span>' : '') +
+        '<button onclick="deleteLeaveEntry(\'' + escapeHtml(e.name) + '\',\'' + escapeHtml(e.date) + '\')" style="background:rgba(252,129,129,0.15);border:1px solid rgba(252,129,129,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">🗑️ Delete</button>' +
+      '</div>'
+    ).join("");
+  } catch(e){ el.innerHTML = '<div class="bl-empty">Couldn\'t load leave entries.</div>'; }
+}
+async function deleteLeaveEntry(name, date){
+  const pin = (document.getElementById("leave-del-pin").value || "").trim();
+  if(!pin){ banner("leave-mgmt-banner","err","Enter your admin PIN first."); return; }
+  banner("leave-mgmt-banner","","Deleting…");
+  try {
+    const fd = new FormData();
+    fd.append("type","deleteleaveentry");
+    fd.append("data", JSON.stringify({ name, date, adminPin: pin }));
+    const res = await fetch(SCRIPT_URL, { method:"POST", body:fd });
+    const data = await res.json();
+    if(data.success){
+      banner("leave-mgmt-banner","ok","✓ Deleted " + name + "'s " + date + " entry. Leave Calendar updated.");
+      loadLeaveEntries();
+    } else {
+      banner("leave-mgmt-banner","err", data.error || "Delete failed.");
+    }
+  } catch(e){ banner("leave-mgmt-banner","err","Request failed."); }
 }
 function renderAdmin(data){
  const rows=(data&&data.eod)?data.eod:(Array.isArray(data)?data:[]);
