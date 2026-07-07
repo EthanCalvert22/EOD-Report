@@ -531,7 +531,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <!-- PIN gate for deleting -->
     <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
       <input type="password" id="leave-del-pin" placeholder="Admin PIN" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;color:var(--text);font-size:13px;font-family:var(--mono);width:160px;">
-      <span style="font-size:12px;color:var(--text3);">Enter PIN then tap 🗑️ next to an entry to delete it.</span>
     </div>
   </div>
 </div>
@@ -675,6 +674,13 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
     <div><h1>🎯 Claim a Booking</h1><p class="sub">Available booked leads — claim yours when one comes in.</p></div>
     <button class="refresh-btn" onclick="loadBookedLeads()">↻ refresh</button>
+  </div>
+  <!-- Name selector — shows who is currently claiming; lets anyone switch without going to Home -->
+  <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:9px;padding:10px 14px;margin-bottom:10px;">
+    <span style="font-size:12px;color:var(--text3);white-space:nowrap;">👤 Claiming as:</span>
+    <select id="bl-user-select" onchange="blSetUser(this.value)" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;font-family:var(--mono);flex:1;max-width:280px;">
+      <option value="">— Select your name —</option>
+    </select>
   </div>
   <div class="banner" id="bl-banner"></div>
   <!-- Senior "claim on behalf of" bar (hidden for regular associates) -->
@@ -1656,6 +1662,7 @@ async function loadBookedLeads(){
   }
   document.getElementById("bl-all-list").innerHTML = '<div class="loading">Loading…</div>';
   document.getElementById("bl-unclaimed-list").innerHTML = '<div class="loading">Loading…</div>';
+  blPopulateUserSelect();
   blSetupClaimAs();
   try {
     // Fetch ALL leads (no date filter) — unclaimed section shows all dates; date picker only filters the history section
@@ -1668,6 +1675,23 @@ async function loadBookedLeads(){
     document.getElementById("bl-unclaimed-list").innerHTML = "";
   }
 }
+function blPopulateUserSelect(){
+  const sel = document.getElementById("bl-user-select");
+  if(!sel) return;
+  const cur = getHomeUser() || "";
+  let opts = '<option value="">— Select your name —</option>';
+  STRUCTURE.forEach(g => {
+    g.members.forEach(name => {
+      opts += '<option value="' + escapeHtml(name) + '"' + (name === cur ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
+    });
+  });
+  sel.innerHTML = opts;
+}
+function blSetUser(name){
+  setHomeUserName(name);
+  blSetupClaimAs();
+  renderBookedLeads();
+}
 function blSetupClaimAs(){
   const myName = getHomeUser() || "";
   const isSenior = SENIORS.includes(myName);
@@ -1677,7 +1701,7 @@ function blSetupClaimAs(){
   if(isSenior){
     bar.style.display = "block";
     // Build options: self first, then every team member
-    let opts = '<option value="' + escapeHtml(myName) + '">' + escapeHtml(myName) + ' (me)</option>';
+    let opts = '<option value="' + escapeHtml(myName) + '">' + escapeHtml(myName) + '</option>';
     STRUCTURE.forEach(g => {
       g.members.forEach(name => {
         if(name !== myName) opts += '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>';
