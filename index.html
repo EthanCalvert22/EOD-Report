@@ -31,6 +31,7 @@ body{background:radial-gradient(1100px 560px at 12% -8%,rgba(43,108,176,0.16),tr
   h1{font-size:22px;}
   .metrics{grid-template-columns:repeat(2,1fr);}
   .field-grid{grid-template-columns:1fr;}
+  .field.full{grid-column:auto;}
   .form-card{padding:16px;}
   .hub-grid{grid-template-columns:1fr 1fr;}
   .hub-card{padding:14px;}
@@ -97,6 +98,7 @@ h1{font-size:27px;font-weight:800;margin-bottom:6px;letter-spacing:-0.01em;}
 .banner{border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;font-size:14px;display:none;box-shadow:var(--shadow-sm);animation:fadeUp .25s var(--ease);}
 .banner.ok{background:rgba(104,211,145,0.1);border:1px solid rgba(104,211,145,0.3);color:var(--green);display:block;}
 .banner.err{background:rgba(252,129,129,0.1);border:1px solid rgba(252,129,129,0.3);color:var(--red);display:block;}
+.banner.info{display:block;background:rgba(66,153,225,0.12);border:1px solid rgba(66,153,225,0.35);color:var(--blue-light);}
 .extra-opts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .opt-btn{padding:10px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--card);color:var(--text2);font-size:13px;cursor:pointer;transition:border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease);}
 .opt-btn:hover{border-color:var(--blue-light);color:var(--text);transform:translateY(-1px);}
@@ -249,6 +251,21 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 .bl-claim-item:last-child{border-bottom:none;}
 .bl-claim-name{font-size:14px;font-weight:600;flex:1;min-width:100px;}
 .bl-empty{font-size:13px;color:var(--text3);padding:20px 0;text-align:center;}
+/* Admin action row on lead cards — separate from the badge row, smaller + muted */
+.bl-admin-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px;padding-top:8px;border-top:1px dashed var(--border);}
+.bl-admin-btn{background:rgba(255,255,255,0.04);border:1px solid var(--border2);color:var(--text2);border-radius:5px;padding:3px 8px;font-size:10.5px;font-family:var(--mono);cursor:pointer;transition:color .15s var(--ease),border-color .15s var(--ease);}
+.bl-admin-btn.danger{border-color:rgba(252,129,129,0.3);color:var(--red);}
+.bl-admin-btn.danger:hover{background:rgba(252,129,129,0.1);}
+.bl-admin-btn.pool{border-color:rgba(66,153,225,0.3);color:var(--blue-light);}
+.bl-admin-btn.pool:hover{background:rgba(66,153,225,0.1);}
+/* Consistent PIN / passcode inputs across the app */
+.pin-input{background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--mono);width:180px;max-width:100%;transition:border-color .15s var(--ease),box-shadow .15s var(--ease);}
+.pin-input:focus{outline:none;border-color:var(--blue-light);box-shadow:0 0 0 3px rgba(66,153,225,0.18);}
+/* Small captions under section headers / above the date strip */
+.bl-section-note{font-size:11px;color:var(--text3);margin:-6px 0 10px;}
+.bl-datenav-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin:16px 0 6px;}
+/* Leads pool level note */
+.pool-note{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:8px;}
 </style>
 </head>
 <body>
@@ -312,6 +329,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <button class="hub-card" id="hub-li-leads" style="display:none;" onclick="goHome('li-leads')"><span class="hc-icon">🔗</span><span class="hc-title">Get Leads</span><span class="hc-sub">Claim your next LinkedIn leads batch.</span></button>
       <button class="hub-card" onclick="goHome('dnc')"><span class="hc-icon">🚫</span><span class="hc-title">Do Not Contact</span><span class="hc-sub">Remove a contact from all lead pools.</span></button>
       <button class="hub-card" onclick="goHome('booked-leads')"><span class="hc-icon">🎯</span><span class="hc-title">Claim a Booking</span><span class="hc-sub">View available booked leads and claim yours.</span></button>
+      <button class="hub-card" id="hub-saul" style="display:none;" onclick="goHome('booking')"><span class="hc-icon">📆</span><span class="hc-title">Log a Booking</span><span class="hc-sub">Log for Saul — plus your own bookings.</span></button>
       <button class="hub-card" onclick="goHome('eod')"><span class="hc-icon">📝</span><span class="hc-title">Submit EOD</span><span class="hc-sub">Log today's outreaches &amp; follow-ups.</span></button>
     </div>
   </div>
@@ -547,8 +565,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div class="banner" id="leave-mgmt-banner" style="margin-bottom:6px;font-size:12px;"></div>
       <div id="leave-entries-list"><div class="loading" style="font-size:12px;">Loading…</div></div>
       <div id="admin-leave-gate" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="password" id="admin-leave-pin" placeholder="PIN to delete" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--mono);width:120px;">
-        <button class="btn-secondary" style="padding:5px 10px;font-size:11px;" onclick="verifyAdminLeave()">Unlock</button>
+        <input type="password" class="pin-input" id="admin-leave-pin" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')verifyAdminLeave()">
+        <button class="btn-secondary" style="padding:8px 12px;font-size:12px;" onclick="verifyAdminLeave()">Unlock →</button>
         <span id="admin-leave-pin-status" style="font-size:11px;color:var(--text3);"></span>
       </div>
       <input type="hidden" id="leave-del-pin">
@@ -577,6 +595,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
         </div>
         <button class="btn-primary" id="ld-claim-btn" onclick="claimLeads()">Get Leads</button>
       </div>
+      <div class="pool-note" id="ld-pool-note"></div>
       <div id="ld-claim-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
       <div id="ld-claim-result"></div>
     </div>
@@ -648,9 +667,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <h3>Enter passcode</h3>
       <div class="field full">
         <label>Passcode</label>
-        <input type="password" id="li-passcode-input" placeholder="Passcode" onkeydown="if(event.key==='Enter')checkLiPasscode()">
+        <input type="password" class="pin-input" id="li-passcode-input" placeholder="Enter passcode" onkeydown="if(event.key==='Enter')checkLiPasscode()">
       </div>
-      <div class="row" style="margin-top:10px;"><button class="btn-primary" onclick="checkLiPasscode()">Unlock</button></div>
+      <div class="row" style="margin-top:10px;"><button class="btn-primary" onclick="checkLiPasscode()">Unlock →</button></div>
       <div id="li-gate-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
     </div>
   </div>
@@ -668,6 +687,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
           </div>
           <button class="btn-primary" id="li-claim-btn" onclick="claimLiLeads()">Get LinkedIn Leads</button>
         </div>
+        <div class="pool-note" id="li-pool-note"></div>
         <div id="li-claim-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
         <div id="li-claim-result"></div>
       </div>
@@ -715,17 +735,19 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <select id="bl-claim-as" onchange="renderBookedLeads()" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;font-family:var(--mono);flex:1;max-width:260px;"></select>
     </div>
   </div>
-  <!-- Date navigation -->
-  <div class="bl-date-nav">
+  <!-- Unclaimed leads (big and prominent) -->
+  <div id="bl-unclaimed-wrap">
+    <div class="bl-section-hdr">🔴 Unclaimed Leads <span class="bl-count" id="bl-unclaimed-count">0</span></div>
+    <div class="bl-section-note">All dates — claim any time</div>
+    <div id="bl-unclaimed-list"><div class="bl-empty">No unclaimed leads right now.</div></div>
+  </div>
+  <!-- Date navigation — only affects the history section below -->
+  <div class="bl-datenav-label">History — bookings for selected day</div>
+  <div class="bl-date-nav" style="margin-bottom:12px;">
     <button class="bl-nav-btn" onclick="blShiftDate(-1)">◀</button>
     <span class="date-txt" id="bl-date-label">Today</span>
     <button class="bl-nav-btn" onclick="blShiftDate(1)">▶</button>
     <button class="today-btn" onclick="blGoToday()">Today</button>
-  </div>
-  <!-- Unclaimed leads (big and prominent) -->
-  <div id="bl-unclaimed-wrap">
-    <div class="bl-section-hdr">🔴 Unclaimed Leads <span class="bl-count" id="bl-unclaimed-count">0</span></div>
-    <div id="bl-unclaimed-list"><div class="bl-empty">No unclaimed leads right now.</div></div>
   </div>
   <!-- All leads for the day -->
   <div id="bl-all-wrap" style="margin-top:6px;">
@@ -742,9 +764,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div id="bl-admin-gate">
         <div class="field" style="max-width:260px;margin-bottom:14px;">
           <label>Admin PIN</label>
-          <input type="password" id="bl-pin-input" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')blVerifyAdmin()">
+          <input type="password" class="pin-input" id="bl-pin-input" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')blVerifyAdmin()">
         </div>
-        <button class="btn-primary" onclick="blVerifyAdmin()">Unlock</button>
+        <button class="btn-primary" onclick="blVerifyAdmin()">Unlock →</button>
         <div id="bl-pin-status" style="font-size:12px;color:var(--red);margin-top:8px;"></div>
       </div>
       <!-- Admin tools — visible after PIN verified -->
@@ -767,7 +789,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
             <input type="date" id="bl-lead-date">
           </div>
           <div class="row" style="margin-top:12px;">
-            <button class="btn-primary" onclick="blSubmitLead()">📤 Send to Team</button>
+            <button class="btn-primary" id="bl-submit-lead-btn" onclick="blSubmitLead()">📤 Send to Team</button>
           </div>
           <div id="bl-submit-status" style="font-size:13px;color:var(--text2);margin-top:8px;"></div>
         </div>
@@ -882,34 +904,53 @@ function showEODForm(){document.getElementById("eod-form").style.display="block"
 function showRemove(){document.getElementById("eod-form").style.display="none";document.getElementById("eod-remove").style.display="block";document.getElementById("eod-comment").style.display="none";}
 function showComment(){document.getElementById("eod-form").style.display="none";document.getElementById("eod-remove").style.display="none";document.getElementById("eod-comment").style.display="block";}
 function backEOD(){document.getElementById("eod-panel").style.display="none";document.getElementById("eod-names").style.display="block";eodSel=null;}
-function submitEOD(){
+// Returns true when a doPost response confirms the write landed.
+function postOk(data){return !!(data&&(data.status==="ok"||data.success===true));}
+async function submitEOD(){
  if(!eodSel)return;
- const fd=new FormData();fd.append("type","eod");
- fd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:0,followups:+v("e-fu")}));
- fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("eod-banner","ok",(eodAlready?"EOD updated for ":"EOD logged for ")+eodSel+". Select another name to continue.");backEOD();
+ const btn=document.getElementById("eod-submit-btn");
+ btn.disabled=true;
+ try{
+   const fd=new FormData();fd.append("type","eod");
+   fd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:0,followups:+v("e-fu")}));
+   const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+   const data=await res.json();
+   if(!postOk(data)){banner("eod-banner","err","Submission failed — please try again.");return;}
+   banner("eod-banner","ok",(eodAlready?"EOD updated for ":"EOD logged for ")+eodSel+". Select another name to continue.");backEOD();
+ }catch(e){banner("eod-banner","err","Submission failed — check your connection and try again.");}
+ finally{btn.disabled=false;}
 }
-function removeEOD(){
+async function removeEOD(){
  if(!eodSel)return;
- const fd=new FormData();fd.append("type","removeeod");fd.append("data",JSON.stringify({name:eodSel}));
- fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("eod-banner","ok","Today's EOD for "+eodSel+" has been removed.");backEOD();
+ try{
+   const fd=new FormData();fd.append("type","removeeod");fd.append("data",JSON.stringify({name:eodSel}));
+   const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+   const data=await res.json();
+   if(!postOk(data)){banner("eod-banner","err","Couldn't remove today's EOD — please try again.");return;}
+   banner("eod-banner","ok","Today's EOD for "+eodSel+" has been removed.");backEOD();
+ }catch(e){banner("eod-banner","err","Request failed — check your connection and try again.");}
 }
-function submitComment(){
+async function submitComment(){
  if(!eodSel)return;
  const t=v("c-text").trim();
  if(!t){banner("eod-banner","err","Please write a comment first.");return;}
- // Only submit EOD alongside the comment if they haven't already submitted one —
- // if eodAlready is true their numbers are already logged correctly and reading
- // the form fields (which reset to 0 on name pick) would overwrite them with zeros.
- if(!eodAlready){
-   const eodFd=new FormData();eodFd.append("type","eod");
-   eodFd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:0,followups:+v("e-fu")}));
-   fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:eodFd});
- }
- const fd=new FormData();fd.append("type","comment");fd.append("data",JSON.stringify({name:eodSel,comment:t}));
- fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("eod-banner","ok","Comment submitted. Thanks "+eodSel+"!");backEOD();
+ try{
+   // Only submit EOD alongside the comment if they haven't already submitted one —
+   // if eodAlready is true their numbers are already logged correctly and reading
+   // the form fields (which reset to 0 on name pick) would overwrite them with zeros.
+   if(!eodAlready){
+     const eodFd=new FormData();eodFd.append("type","eod");
+     eodFd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:0,followups:+v("e-fu")}));
+     const eodRes=await fetch(SCRIPT_URL,{method:"POST",body:eodFd});
+     const eodData=await eodRes.json();
+     if(!postOk(eodData)){banner("eod-banner","err","EOD submission failed — please try again.");return;}
+   }
+   const fd=new FormData();fd.append("type","comment");fd.append("data",JSON.stringify({name:eodSel,comment:t}));
+   const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+   const data=await res.json();
+   if(!postOk(data)){banner("eod-banner","err","Comment failed to save — please try again.");return;}
+   banner("eod-banner","ok","Comment submitted. Thanks "+eodSel+"!");backEOD();
+ }catch(e){banner("eod-banner","err","Request failed — check your connection and try again.");}
 }
 /* ===================== BOOKING ===================== */
 let bkSel=null,myBookings=[];
@@ -956,22 +997,25 @@ function renderMyBookingsToday(name){
   list.innerHTML="";
   myBookingsToday.forEach(b=>{
     const d=document.createElement("div");d.className="bkrow";
-    const tag=b.eodCredit?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(for Saul — credited to '+b.eodCredit+')</span>'
+    const tag=b.eodCredit?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(for Saul — credited to '+escapeHtml(b.eodCredit)+')</span>'
       :b.roundRobinPool?' <span style="font-size:11px;color:var(--accent);font-weight:600;">(Round Robin pool)</span>':'';
-    d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+tag+'</span>'+
+    d.innerHTML='<span class="bkdate">'+escapeHtml(b.date||"")+'</span><span class="bkemail">'+escapeHtml(b.email||"")+tag+'</span>'+
       '<button class="bkdel" title="Remove this booking" onclick="deleteBooking(\''+encodeURIComponent(b.timestamp)+'\',\''+encodeURIComponent(name)+'\')">✕</button>';
     list.appendChild(d);
   });
 }
-function deleteBooking(encTimestamp,encName){
+async function deleteBooking(encTimestamp,encName){
   const timestamp=decodeURIComponent(encTimestamp),name=decodeURIComponent(encName);
   if(!confirm("Remove this booking? It will also be removed from today's meetings-booked count."))return;
-  const fd=new FormData();fd.append("type","deletebooking");
-  fd.append("data",JSON.stringify({name:name,timestamp:timestamp}));
-  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd}).then(()=>{
+  try{
+    const fd=new FormData();fd.append("type","deletebooking");
+    fd.append("data",JSON.stringify({name:name,timestamp:timestamp}));
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+    const data=await res.json();
+    if(!postOk(data)){banner("bk-banner","err","Couldn't remove the booking — please try again.");return;}
     myBookingsToday=myBookingsToday.filter(b=>b.timestamp!==timestamp);
     renderMyBookingsToday(name);
-  });
+  }catch(e){banner("bk-banner","err","Request failed — check your connection and try again.");}
 }
 function loadMyBookings(name){
   myBookings=[];
@@ -988,7 +1032,7 @@ function renderMyBookings(){
   document.getElementById("bk-mine-label").textContent="Your logged bookings ("+myBookings.length+")";
   if(!myBookings.length){list.innerHTML='<div class="bkempty">No bookings logged yet.</div>';return;}
   list.innerHTML="";
-  myBookings.forEach(b=>{const d=document.createElement("div");d.className="bkrow";d.innerHTML='<span class="bkdate">'+(b.date||"")+'</span><span class="bkemail">'+(b.email||"")+'</span>';list.appendChild(d);});
+  myBookings.forEach(b=>{const d=document.createElement("div");d.className="bkrow";d.innerHTML='<span class="bkdate">'+escapeHtml(b.date||"")+'</span><span class="bkemail">'+escapeHtml(b.email||"")+'</span>';list.appendChild(d);});
 }
 function checkDupe(){
   const email=document.getElementById("b-email").value.trim().toLowerCase();
@@ -996,29 +1040,33 @@ function checkDupe(){
   if(email&&myBookings.some(b=>(b.email||"").trim().toLowerCase()===email)){warn.style.display="block";}else{warn.style.display="none";}
 }
 function backBk(){document.getElementById("bk-form").style.display="none";document.getElementById("bk-names").style.display="block";bkSel=null;}
-function submitBooking(){
+async function submitBooking(){
  if(!bkSel)return;
  const email=v("b-email").trim();
  if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
  const isoDate=/^\d{4}-\d{2}-\d{2}$/.test(v("b-date"))?v("b-date"):nyTodayISO();
  const team=ALL.find(x=>x.name===bkSel).team;
- const fd=new FormData();fd.append("type","booking");
- fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:isoDate}));
- fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");
- myBookings.unshift({date:isoDate,email:email});renderMyBookings();
- if(isoDate===nyTodayISO()){
-   myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:v("b-company")});
-   renderMyBookingsToday(bkSel);
-   setTimeout(()=>loadMyBookingsToday(bkSel),1500); // pick up the real server timestamp for accurate deletes
- }
- document.getElementById("b-email").value="";document.getElementById("b-company").value="";document.getElementById("b-dupe").style.display="none";
+ try{
+   const fd=new FormData();fd.append("type","booking");
+   fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:v("b-company"),date:isoDate}));
+   const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+   const data=await res.json();
+   if(!postOk(data)){banner("bk-banner","err","Booking didn't save — please try again.");return;}
+   banner("bk-banner","ok","Booking logged for "+bkSel+" ("+email+"). Nice work! 🎉");
+   myBookings.unshift({date:isoDate,email:email});renderMyBookings();
+   if(isoDate===nyTodayISO()){
+     myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:v("b-company")});
+     renderMyBookingsToday(bkSel);
+     setTimeout(()=>loadMyBookingsToday(bkSel),1500); // pick up the real server timestamp for accurate deletes
+   }
+   document.getElementById("b-email").value="";document.getElementById("b-company").value="";document.getElementById("b-dupe").style.display="none";
+ }catch(e){banner("bk-banner","err","Request failed — check your connection and try again.");}
 }
 // Allen logging on behalf of Saul (Ethan's team). Still saved under Allen's own
 // name so the leaderboard credits her, but eodCredit:"Ethan" tells the Today
 // sheet to count this meeting toward Ethan's row / Saul's Team total instead of
 // her own LinkedIn Team row — see rebuildToday_v3 in Code_FINAL.gs.
-function submitBookingForSaul(){
+async function submitBookingForSaul(){
  if(!bkSel||bkSel!=="Allen Marie")return;
  const email=document.getElementById("b-saul-email").value.trim();
  if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
@@ -1026,17 +1074,21 @@ function submitBookingForSaul(){
  const isoDate=/^\d{4}-\d{2}-\d{2}$/.test(dateVal)?dateVal:nyTodayISO();
  const company=document.getElementById("b-saul-company").value;
  const team=ALL.find(x=>x.name===bkSel).team;
- const fd=new FormData();fd.append("type","booking");
- fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:company,date:isoDate,eodCredit:"Ethan"}));
- fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("bk-banner","ok","Booking for Saul logged ("+email+") — credited to Ethan's team. Nice work! 🎉");
- myBookings.unshift({date:isoDate,email:email});renderMyBookings();
- if(isoDate===nyTodayISO()){
-   myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:company,eodCredit:"Ethan"});
-   renderMyBookingsToday(bkSel);
-   setTimeout(()=>loadMyBookingsToday(bkSel),1500);
- }
- document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
+ try{
+   const fd=new FormData();fd.append("type","booking");
+   fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:company,date:isoDate,eodCredit:"Ethan"}));
+   const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+   const data=await res.json();
+   if(!postOk(data)){banner("bk-banner","err","Booking didn't save — please try again.");return;}
+   banner("bk-banner","ok","Booking for Saul logged ("+email+") — credited to Ethan's team. Nice work! 🎉");
+   myBookings.unshift({date:isoDate,email:email});renderMyBookings();
+   if(isoDate===nyTodayISO()){
+     myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:company,eodCredit:"Ethan"});
+     renderMyBookingsToday(bkSel);
+     setTimeout(()=>loadMyBookingsToday(bkSel),1500);
+   }
+   document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
+ }catch(e){banner("bk-banner","err","Request failed — check your connection and try again.");}
 }
 // Core "capital strategy" members booking on behalf of the Round Robin Email
 // Leads pool. Saved under their own name (leaderboard credit unchanged), and
@@ -1044,7 +1096,7 @@ function submitBookingForSaul(){
 // pooled Round Robin total — no individual teammate's personal row is touched.
 // See isRoundRobinEligible(), and rebuildToday_v3 / rebuildEODReport_v3 in
 // Code_FINAL.gs for how the pool flag (Bookings col H) is handled.
-function submitBookingForRoundRobin(){
+async function submitBookingForRoundRobin(){
  if(!bkSel||!isRoundRobinEligible(bkSel))return;
  const email=document.getElementById("b-rr-email").value.trim();
  if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
@@ -1052,17 +1104,21 @@ function submitBookingForRoundRobin(){
  const isoDate=/^\d{4}-\d{2}-\d{2}$/.test(dateVal)?dateVal:nyTodayISO();
  const company=document.getElementById("b-rr-company").value;
  const team=ALL.find(x=>x.name===bkSel).team;
- const fd=new FormData();fd.append("type","booking");
- fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:company,date:isoDate,roundRobinPool:true}));
- fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
- banner("bk-banner","ok","Round Robin booking logged ("+email+") — added to the Round Robin Email Leads pool. Nice work! 🎉");
- myBookings.unshift({date:isoDate,email:email});renderMyBookings();
- if(isoDate===nyTodayISO()){
-   myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:company,roundRobinPool:true});
-   renderMyBookingsToday(bkSel);
-   setTimeout(()=>loadMyBookingsToday(bkSel),1500);
- }
- document.getElementById("b-rr-email").value="";document.getElementById("b-rr-company").value="";
+ try{
+   const fd=new FormData();fd.append("type","booking");
+   fd.append("data",JSON.stringify({name:bkSel,team:team,email:email,company:company,date:isoDate,roundRobinPool:true}));
+   const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+   const data=await res.json();
+   if(!postOk(data)){banner("bk-banner","err","Booking didn't save — please try again.");return;}
+   banner("bk-banner","ok","Round Robin booking logged ("+email+") — added to the Round Robin Email Leads pool. Nice work! 🎉");
+   myBookings.unshift({date:isoDate,email:email});renderMyBookings();
+   if(isoDate===nyTodayISO()){
+     myBookingsToday.unshift({timestamp:new Date().toISOString(),date:isoDate,email:email,company:company,roundRobinPool:true});
+     renderMyBookingsToday(bkSel);
+     setTimeout(()=>loadMyBookingsToday(bkSel),1500);
+   }
+   document.getElementById("b-rr-email").value="";document.getElementById("b-rr-company").value="";
+ }catch(e){banner("bk-banner","err","Request failed — check your connection and try again.");}
 }
 /* ===================== ATTENDANCE ===================== */
 let attSelectedStatus="";
@@ -1086,7 +1142,7 @@ async function onAttNameOrDateChange(){
     const roll=await res.json();
     const mine=roll.find(r=>r.name===name&&r.submitted);
     if(mine){
-      already.innerHTML="✓ Already submitted today — Status: <b>"+mine.status+"</b>. Submitting again will update your record.";
+      already.innerHTML="✓ Already submitted today — Status: <b>"+escapeHtml(mine.status)+"</b>. Submitting again will update your record.";
       already.style.display="block";
       selectAttStatus(mine.status);
       document.getElementById("attNotes").value=mine.notes||"";
@@ -1108,7 +1164,9 @@ async function submitAttendance(){
   try{
     const fd=new FormData();fd.append("type","attendance");
     fd.append("data",JSON.stringify({name:name,date:dateFormatted,status:attSelectedStatus,notes:notes}));
-    await fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",body:fd});
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
+    const data=await res.json();
+    if(!postOk(data))throw new Error((data&&data.message)||"Submission not confirmed");
     const isFuture=dateVal>nyTodayISO();
     ab.textContent=isFuture?"✅ Leave filed for "+dateFormatted+" — "+attSelectedStatus:"✅ Attendance submitted — "+name+", "+attSelectedStatus;
     ab.className="banner ok";
@@ -1135,22 +1193,32 @@ async function loadRollCall(){
       const card=document.createElement("div");
       card.className="att-card "+(p.submitted?"submitted":"not-submitted");
       const timePart=p.submitted&&p.time?String(p.time).split(" ")[1]||"":"";
-      card.innerHTML='<div class="ac-name">'+p.name+'</div>'+
-        '<div class="ac-status">'+(p.submitted?(lbl[p.status]||p.status):"⏳ Not submitted")+'</div>'+
-        (timePart?'<div class="ac-time">'+timePart+'</div>':"")+
-        (p.notes&&p.submitted?'<div class="ac-time">'+p.notes+'</div>':"");
+      card.innerHTML='<div class="ac-name">'+escapeHtml(p.name)+'</div>'+
+        '<div class="ac-status">'+(p.submitted?(lbl[p.status]||escapeHtml(p.status)):"⏳ Not submitted")+'</div>'+
+        (timePart?'<div class="ac-time">'+escapeHtml(timePart)+'</div>':"")+
+        (p.notes&&p.submitted?'<div class="ac-time">'+escapeHtml(p.notes)+'</div>':"");
       grid.appendChild(card);
     });
   }catch(e){loading.textContent="Couldn't load roll call. Tap refresh to retry.";}
 }
 /* ===================== LEADERBOARD ===================== */
 let lbData=null,lbRaw=null,lbPeriod="month";
+// Approved VL/SL days per person ({name:[isoDate,...]}) — comes back with the
+// leaderboard payload and lets computeStreak skip leave days like weekends.
+let leaveByPerson={};
 const DAILY_GOAL=13;
+// The leaderboard endpoint now returns {bookings:[...],leaveByPerson:{...}};
+// older deployments returned a bare array — handle both.
+function parseLeaderboardPayload(data){
+  const rows=Array.isArray(data)?data:((data&&data.bookings)||[]);
+  leaveByPerson=(data&&!Array.isArray(data)&&data.leaveByPerson)?data.leaveByPerson:{};
+  return rows;
+}
 function loadLeaderboard(){
  document.getElementById("lb-loading").style.display="block";
  document.getElementById("lb-content").style.display="none";
  fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now()).then(r=>r.json())
-  .then(rows=>{lbRaw=rows;lbData=computeStats(rows);renderLeaderboard();updateHomeStats();})
+  .then(data=>{lbRaw=parseLeaderboardPayload(data);lbData=computeStats(lbRaw);renderLeaderboard();updateHomeStats();})
   .catch(()=>{document.getElementById("lb-loading").textContent="Couldn't load. Tap refresh to retry.";});
 }
 function computeStats(bookings){
@@ -1182,13 +1250,18 @@ function computeStreak(raw,name){
   const today=nyTodayISO();
   const dates=[...new Set((raw||[]).filter(b=>b.name===name&&/^\d{4}-\d{2}-\d{2}$/.test(b.dateKey||'')).map(b=>b.dateKey))].sort().reverse();
   if(!dates.length)return 0;
-  // Allow streak to start from the most recent workday (handles weekends — Mon looks back to Fri)
-  const todayWD=lastWorkdayOnOrBefore(today);
-  const start=dates[0]===todayWD?todayWD:dates[0]===prevWorkday(todayWD)?prevWorkday(todayWD):null;
+  // Approved VL/SL days count like weekends — skipped, not streak-breaking.
+  const leaveSet=new Set(leaveByPerson[name]||[]);
+  const skipDay=d=>isWeekendISO(d)||leaveSet.has(d);
+  const prevWD=iso=>{let d=offsetDay(iso,-1);while(skipDay(d))d=offsetDay(d,-1);return d;};
+  const lastWD=iso=>skipDay(iso)?prevWD(iso):iso;
+  // Allow streak to start from the most recent workday (handles weekends + leave — Mon looks back to Fri)
+  const todayWD=lastWD(today);
+  const start=dates[0]===todayWD?todayWD:dates[0]===prevWD(todayWD)?prevWD(todayWD):null;
   if(!start)return 0;
   let n=0,exp=start;
-  // Step backwards by workday so weekends don't break the chain
-  for(const d of dates){if(d===exp){n++;exp=prevWorkday(exp);}else break;}
+  // Step backwards by workday so weekends and approved leave don't break the chain
+  for(const d of dates){if(d===exp){n++;exp=prevWD(exp);}else break;}
   return n;
 }
 function computePB(raw,name,period){
@@ -1234,14 +1307,14 @@ function updateHomeTeamPanel(){
     if(streaks.length===0){se.textContent='No active streaks yet — be the first!';}
     else{
       const medals=['🥇','🥈','🥉'];
-      se.innerHTML=streaks.slice(0,5).map((x,i)=>'<span style="display:inline-block;margin:3px 10px 3px 0;white-space:nowrap">'+(medals[i]||'  ')+'<b>'+x.name+'</b> <span style="color:var(--text2)">'+x.s+(x.s===1?' day':' days')+'</span></span>').join('');
+      se.innerHTML=streaks.slice(0,5).map((x,i)=>'<span style="display:inline-block;margin:3px 10px 3px 0;white-space:nowrap">'+(medals[i]||'  ')+'<b>'+escapeHtml(x.name)+'</b> <span style="color:var(--text2)">'+x.s+(x.s===1?' day':' days')+'</span></span>').join('');
     }
   }
 }
 function loadHomeStatsIfNeeded(){
   if(lbRaw){updateHomeStats();updateHomeTeamPanel();return;}
   fetch(SCRIPT_URL+"?action=leaderboard&t="+Date.now()).then(r=>r.json())
-  .then(rows=>{lbRaw=rows;lbData=computeStats(rows);updateHomeStats();updateHomeTeamPanel();}).catch(()=>{});
+  .then(data=>{lbRaw=parseLeaderboardPayload(data);lbData=computeStats(lbRaw);updateHomeStats();updateHomeTeamPanel();}).catch(()=>{});
 }
 function setPeriod(p,btn){lbPeriod=p;document.querySelectorAll("#lb-seg button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderLeaderboard();}
 function toggleFull(){const w=document.getElementById("lb-fullwrap");const btn=document.querySelector(".toggle-full");if(w.style.display==="none"){w.style.display="block";btn.textContent="▴ Hide full rankings";}else{w.style.display="none";btn.textContent="▾ Show full individual rankings";}}
@@ -1297,11 +1370,26 @@ function renderLeaderboard(){
 function loadAdmin(){
  document.getElementById("ad-loading").style.display="block";
  document.getElementById("ad-content").style.display="none";
+ leaveTryStoredAdmin(); // silently restore per-device admin unlock if the stored PIN is still valid
  fetch(SCRIPT_URL+"?action=eodtoday&t="+Date.now()).then(r=>r.json())
   .then(data=>renderAdmin(data))
   .catch(()=>{document.getElementById("ad-loading").textContent="Couldn't load. Tap refresh to retry.";});
 }
 let adminLeavePin = "";
+// Per-device admin unlock persistence — the verified PIN is kept in
+// localStorage ("nsp_admin_pin", shared with the Booked Leads admin gate)
+// and silently re-verified against the server on load. Cleared whenever a
+// check fails (PIN may have changed).
+const ADMIN_PIN_KEY = "nsp_admin_pin";
+function getStoredAdminPin(){ try { return localStorage.getItem(ADMIN_PIN_KEY) || ""; } catch(e){ return ""; } }
+function setStoredAdminPin(pin){ try { localStorage.setItem(ADMIN_PIN_KEY, pin); } catch(e){} }
+function clearStoredAdminPin(){ try { localStorage.removeItem(ADMIN_PIN_KEY); } catch(e){} }
+function applyLeaveAdminUnlock(pin){
+  adminLeavePin = pin;
+  document.getElementById("leave-del-pin").value = pin;
+  document.getElementById("admin-leave-gate").style.display = "none";
+  document.getElementById("admin-leave-pin-status").textContent = "🔓 Delete enabled";
+}
 async function verifyAdminLeave(){
   const pin = (document.getElementById("admin-leave-pin").value || "").trim();
   const statusEl = document.getElementById("admin-leave-pin-status");
@@ -1310,13 +1398,33 @@ async function verifyAdminLeave(){
   try {
     const res = await fetch(SCRIPT_URL + "?action=checkadminpin&code=" + encodeURIComponent(pin) + "&t=" + Date.now());
     const data = await res.json();
-    if(!data.ok){ statusEl.textContent = "Incorrect PIN."; return; }
-    adminLeavePin = pin;
-    document.getElementById("leave-del-pin").value = pin;
-    document.getElementById("admin-leave-gate").style.display = "none";
-    statusEl.textContent = "🔓 Delete enabled";
+    if(!data.ok){
+      statusEl.textContent = data.locked ? "Too many attempts — try again in 10 minutes." : "Incorrect PIN.";
+      clearStoredAdminPin();
+      return;
+    }
+    setStoredAdminPin(pin);
+    applyLeaveAdminUnlock(pin);
     loadLeaveEntries(); // re-render with delete buttons visible
   } catch(e){ statusEl.textContent = "Request failed."; }
+}
+// Silently re-verify a stored PIN when the Admin tab opens — no re-prompt if still valid.
+let leaveAdminChecked = false;
+async function leaveTryStoredAdmin(){
+  if(adminLeavePin || leaveAdminChecked) return;
+  leaveAdminChecked = true;
+  const pin = getStoredAdminPin();
+  if(!pin) return;
+  try {
+    const res = await fetch(SCRIPT_URL + "?action=checkadminpin&code=" + encodeURIComponent(pin) + "&t=" + Date.now());
+    const data = await res.json();
+    if(data.ok){
+      applyLeaveAdminUnlock(pin);
+      loadLeaveEntries();
+    } else {
+      clearStoredAdminPin(); // PIN changed — require manual unlock again
+    }
+  } catch(e){}
 }
 async function loadLeaveEntries(){
   const el = document.getElementById("leave-entries-list");
@@ -1327,9 +1435,16 @@ async function loadLeaveEntries(){
     const data = await res.json();
     const entries = (data && data.entries) ? data.entries : [];
     if(!entries.length){ el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0;">No current or upcoming leave.</div>'; return; }
-    el.innerHTML = entries.map(e => {
+    // Column header row for the leave panel
+    const headerRow = '<div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px 4px;gap:6px;">' +
+      '<span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:var(--mono);">Name · Date</span>' +
+      '<span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:var(--mono);">Type' + (adminLeavePin ? ' · Del' : '') + '</span>' +
+      '</div>';
+    el.innerHTML = headerRow + entries.map(e => {
+      // Names/dates go through encodeURIComponent (not raw interpolation) so a
+      // quote in a name can't break out of the onclick attribute.
       const delBtn = adminLeavePin
-        ? '<button onclick="deleteLeaveEntry(\'' + escapeHtml(e.name) + '\',\'' + escapeHtml(e.date) + '\')" style="background:rgba(252,129,129,0.12);border:1px solid rgba(252,129,129,0.25);color:var(--red);border-radius:5px;padding:3px 7px;font-size:10px;cursor:pointer;margin-left:4px;">✕</button>'
+        ? '<button onclick="deleteLeaveEntry(\'' + encodeURIComponent(e.name) + '\',\'' + encodeURIComponent(e.date) + '\')" style="background:rgba(252,129,129,0.12);border:1px solid rgba(252,129,129,0.25);color:var(--red);border-radius:5px;padding:3px 7px;font-size:10px;cursor:pointer;margin-left:4px;">✕</button>'
         : '';
       return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;margin-bottom:5px;gap:6px;">' +
         '<div style="min-width:0;">' +
@@ -1337,17 +1452,18 @@ async function loadLeaveEntries(){
           '<span style="font-size:11px;color:var(--text3);margin-left:6px;">' + escapeHtml(e.date) + '</span>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">' +
-          '<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:' + (e.status==='VL'?'rgba(246,173,85,0.18)':'rgba(66,153,225,0.18)') + ';color:' + (e.status==='VL'?'var(--accent)':'var(--blue-light)') + ';">' + e.status + '</span>' +
+          '<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:' + (e.status==='VL'?'rgba(246,173,85,0.18)':'rgba(66,153,225,0.18)') + ';color:' + (e.status==='VL'?'var(--accent)':'var(--blue-light)') + ';">' + escapeHtml(e.status) + '</span>' +
           delBtn +
         '</div>' +
       '</div>';
     }).join("");
   } catch(e){ el.innerHTML = '<div class="bl-empty">Couldn\'t load leave entries.</div>'; }
 }
-async function deleteLeaveEntry(name, date){
+async function deleteLeaveEntry(encName, encDate){
+  const name = decodeURIComponent(encName), date = decodeURIComponent(encDate);
   const pin = (document.getElementById("leave-del-pin").value || "").trim();
   if(!pin){ banner("leave-mgmt-banner","err","Enter your admin PIN first."); return; }
-  banner("leave-mgmt-banner","","Deleting…");
+  banner("leave-mgmt-banner","info","Deleting…");
   try {
     const fd = new FormData();
     fd.append("type","deleteleaveentry");
@@ -1402,15 +1518,29 @@ function pickLeadsName(name,btn){
   document.getElementById("ld-remove-input").value="";
   document.getElementById("ld-remove-reason").value="";
   document.getElementById("ld-dnc-search").value="";
+  loadLeadsRemaining("regular","ld-pool-note");
   searchDNC();
 }
 function backLeads(){document.getElementById("leads-panel").style.display="none";document.getElementById("leads-names").style.display="block";leadsSel=null;}
+// Fetches the approximate number of leads left past the claim pointer and
+// shows it under the claim card ("≈ N leads remaining in pool").
+function loadLeadsRemaining(pool,elId){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  el.textContent="";
+  fetch(SCRIPT_URL+"?action=leadsremaining&pool="+encodeURIComponent(pool)+"&t="+Date.now())
+    .then(r=>r.json())
+    .then(d=>{if(d&&typeof d.remaining==="number")el.textContent="≈ "+d.remaining.toLocaleString()+" leads remaining in pool";})
+    .catch(()=>{});
+}
 async function claimLeads(){
   if(!leadsSel)return;
   const count=v("ld-count");
   const statusEl=document.getElementById("ld-claim-status");
   const resultEl=document.getElementById("ld-claim-result");
+  const btn=document.getElementById("ld-claim-btn");
   statusEl.textContent="Claiming leads…";resultEl.innerHTML="";
+  btn.disabled=true;
   try{
     const fd=new FormData();fd.append("type","claimleads");
     fd.append("data",JSON.stringify({name:leadsSel,count:count}));
@@ -1418,7 +1548,7 @@ async function claimLeads(){
     const data=await res.json();
     if(!data.success){statusEl.textContent="Error: "+data.error;return;}
     if(data.repeat){
-      statusEl.innerHTML='⚠ You already claimed these '+data.count+' lead(s) about '+data.claimedAgo+' min ago — here they are again so nothing gets missed. (Claim again later for a fresh batch.)';
+      statusEl.innerHTML='⚠ You already claimed these '+data.count+' lead(s) about '+(data.claimedAgo!=null?data.claimedAgo:"a few")+' min ago — here they are again so nothing gets missed. (Claim again later for a fresh batch.)';
     }else{
       statusEl.textContent="Claimed "+data.count+" lead(s).";
     }
@@ -1426,16 +1556,18 @@ async function claimLeads(){
       const joined=data.leads.join("\n");
       resultEl.innerHTML='<div style="margin:10px 0;">'+
         '<label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">Click the box below, then Copy — then paste straight into a column in your Google Sheet.</label>'+
-        '<textarea id="ld-leads-textarea" readonly onclick="this.select()" style="width:100%;min-height:160px;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);resize:vertical;">'+joined+'</textarea>'+
+        '<textarea id="ld-leads-textarea" readonly onclick="this.select()" style="width:100%;min-height:160px;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);resize:vertical;">'+escapeHtml(joined)+'</textarea>'+
         '<div class="row" style="margin-top:8px;">'+
         '<button class="btn-primary" onclick="copyLeadsToClipboard()">Copy to clipboard</button>'+
         '<span id="ld-copy-status" style="font-size:12px;color:var(--green);"></span>'+
         '</div></div>'+
         '<table><thead><tr><th>#</th><th>Email</th></tr></thead><tbody>'+
-        data.leads.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+e+'</td></tr>').join("")+
+        data.leads.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(e)+'</td></tr>').join("")+
         '</tbody></table>';
     }
+    loadLeadsRemaining("regular","ld-pool-note");
   }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
+  finally{btn.disabled=false;}
 }
 async function copyLeadsToClipboard(){
   const ta=document.getElementById("ld-leads-textarea");
@@ -1488,7 +1620,7 @@ async function runDNCSearch(query){
     if(!data||!data.length){el.innerHTML='<div class="bkempty">No matches.</div>';countEl.textContent="0 contacts.";return;}
     countEl.textContent=data.length+" contact"+(data.length===1?"":"s")+(query?" matching \""+query+"\"":" total");
     el.innerHTML='<table><thead><tr><th>Email</th><th>Date Added</th><th>Added By</th><th>Reason</th></tr></thead><tbody>'+
-      data.map(r=>'<tr><td>'+r.email+'</td><td>'+r.dateAdded+'</td><td>'+r.addedBy+'</td><td>'+r.reason+'</td></tr>').join("")+
+      data.map(r=>'<tr><td>'+escapeHtml(r.email)+'</td><td>'+escapeHtml(r.dateAdded)+'</td><td>'+escapeHtml(r.addedBy)+'</td><td>'+escapeHtml(r.reason)+'</td></tr>').join("")+
       '</tbody></table>';
   }catch(e){el.innerHTML='Search failed.';}
 }
@@ -1554,6 +1686,7 @@ function pickLiLeadsName(name,btn){
   document.getElementById("li-remove-status").textContent="";
   document.getElementById("li-remove-input").value="";
   document.getElementById("li-remove-reason").value="";
+  loadLeadsRemaining("linkedin","li-pool-note");
 }
 function backLiLeads(){document.getElementById("li-panel").style.display="none";document.getElementById("li-names").style.display="block";liSel=null;}
 async function claimLiLeads(){
@@ -1561,7 +1694,9 @@ async function claimLiLeads(){
   const count=v("li-count");
   const statusEl=document.getElementById("li-claim-status");
   const resultEl=document.getElementById("li-claim-result");
+  const btn=document.getElementById("li-claim-btn");
   statusEl.textContent="Claiming leads…";resultEl.innerHTML="";
+  btn.disabled=true;
   try{
     const fd=new FormData();fd.append("type","claimlinkedinleads");
     fd.append("data",JSON.stringify({name:liSel,count:count,passcode:getLiPasscode()}));
@@ -1569,7 +1704,7 @@ async function claimLiLeads(){
     const data=await res.json();
     if(!data.success){statusEl.textContent="Error: "+data.error;if((data.error||"").indexOf("passcode")>-1){setLiPasscode("");liShowGateOrUnlocked();}return;}
     if(data.repeat){
-      statusEl.innerHTML='⚠ You already claimed these '+data.count+' lead(s) about '+data.claimedAgo+' min ago — here they are again so nothing gets missed. (Claim again later for a fresh batch.)';
+      statusEl.innerHTML='⚠ You already claimed these '+data.count+' lead(s) about '+(data.claimedAgo!=null?data.claimedAgo:"a few")+' min ago — here they are again so nothing gets missed. (Claim again later for a fresh batch.)';
     }else{
       statusEl.textContent="Claimed "+data.count+" lead(s).";
     }
@@ -1577,16 +1712,18 @@ async function claimLiLeads(){
       const joined=data.leads.join("\n");
       resultEl.innerHTML='<div style="margin:10px 0;">'+
         '<label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">Click the box below, then Copy — then paste straight into a column in your Google Sheet.</label>'+
-        '<textarea id="li-leads-textarea" readonly onclick="this.select()" style="width:100%;min-height:160px;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);resize:vertical;">'+joined+'</textarea>'+
+        '<textarea id="li-leads-textarea" readonly onclick="this.select()" style="width:100%;min-height:160px;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);resize:vertical;">'+escapeHtml(joined)+'</textarea>'+
         '<div class="row" style="margin-top:8px;">'+
         '<button class="btn-primary" onclick="copyLiLeadsToClipboard()">Copy to clipboard</button>'+
         '<span id="li-copy-status" style="font-size:12px;color:var(--green);"></span>'+
         '</div></div>'+
         '<table><thead><tr><th>#</th><th>Email</th></tr></thead><tbody>'+
-        data.leads.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+e+'</td></tr>').join("")+
+        data.leads.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(e)+'</td></tr>').join("")+
         '</tbody></table>';
     }
+    loadLeadsRemaining("linkedin","li-pool-note");
   }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
+  finally{btn.disabled=false;}
 }
 async function copyLiLeadsToClipboard(){
   const ta=document.getElementById("li-leads-textarea");
@@ -1647,6 +1784,9 @@ function renderHomeHub(){
     const liAllowed=isLiLeadsAllowed(name);
     document.getElementById("hub-li-leads").style.display=liAllowed?"":"none";
     document.getElementById("hub-leads").style.display=liAllowed?"none":"";
+    // Allen Marie also logs bookings on behalf of Saul — restore her entry
+    // point to the Log a Booking view (the #v-booking flow already works).
+    document.getElementById("hub-saul").style.display=(name==="Allen Marie")?"":"none";
     sub.textContent="Jump straight into what you need — your name carries over automatically.";
     loadHomeStatsIfNeeded();
   }else{
@@ -1720,6 +1860,7 @@ async function loadBookedLeads(){
   document.getElementById("bl-unclaimed-list").innerHTML = '<div class="loading">Loading…</div>';
   blPopulateUserSelect();
   blSetupClaimAs();
+  blTryStoredAdmin(); // silently restore per-device admin unlock if the stored PIN is still valid
   try {
     // Fetch ALL leads (no date filter) — unclaimed section shows all dates; date picker only filters the history section
     const res = await fetch(SCRIPT_URL + "?action=getbookedleads&t=" + Date.now());
@@ -1820,7 +1961,7 @@ function blLeadCardHtml(l, myName, claimName){
   if(l.status !== "assigned"){
     if(!claimedByTarget && claimName){
       const btnLabel = isSeniorClaiming ? 'Claim for ' + escapeHtml(claimName) : 'Claim this lead';
-      actionHtml = '<button class="btn-primary" style="padding:8px 18px;font-size:13px;" onclick="blClaimLead(\'' + l.leadId + '\')">' + btnLabel + '</button>';
+      actionHtml = '<button class="btn-primary" style="padding:8px 18px;font-size:13px;" onclick="blClaimLead(\'' + l.leadId + '\',this)">' + btnLabel + '</button>';
     } else if(claimedByTarget){
       const suffix = isSeniorClaiming ? ' for ' + escapeHtml(claimName) : '';
       actionHtml = '<span style="font-size:12px;color:var(--green);font-weight:600;padding:8px 0;display:inline-block;">✓ Claimed' + suffix + ' — waiting for Ethan to confirm</span>';
@@ -1828,24 +1969,29 @@ function blLeadCardHtml(l, myName, claimName){
       actionHtml = '<span style="font-size:12px;color:var(--text3);">Pick your name on the Home tab to claim.</span>';
     }
   }
+  // Admin actions live on their own muted row below the badges so the badge
+  // row doesn't get crowded.
   const retractBtn = blAdminUnlocked
-    ? '<button onclick="blRetractLead(\'' + l.leadId + '\')" style="background:rgba(252,129,129,0.12);border:1px solid rgba(252,129,129,0.25);color:var(--red);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;margin-left:6px;">🗑️ Retract</button>'
+    ? '<button class="bl-admin-btn danger" onclick="blRetractLead(\'' + l.leadId + '\')">🗑️ Retract</button>'
     : '';
   const rrPoolBtn = (blAdminUnlocked && l.status !== 'assigned')
-    ? '<button onclick="blCreditToPool(\'' + l.leadId + '\')" style="background:rgba(66,153,225,0.12);border:1px solid rgba(66,153,225,0.25);color:var(--blue-light,#63b3ed);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;margin-left:6px;">→ RR Pool</button>'
+    ? '<button class="bl-admin-btn pool" onclick="blCreditToPool(\'' + l.leadId + '\')">→ RR Pool</button>'
     : '';
+  const adminRowHtml = (retractBtn || rrPoolBtn) ? '<div class="bl-admin-row">' + retractBtn + rrPoolBtn + '</div>' : '';
   return '<div class="bl-lead-card ' + l.status + '">' +
-    '<div class="bl-badges"><span class="bl-type-badge ' + typeCls + '">' + typeLabel + '</span><span class="bl-status-badge">' + statusLabel + '</span>' + retractBtn + rrPoolBtn + '</div>' +
+    '<div class="bl-badges"><span class="bl-type-badge ' + typeCls + '">' + typeLabel + '</span><span class="bl-status-badge">' + statusLabel + '</span></div>' +
     emailHtml +
     '<div class="bl-meta">Posted ' + escapeHtml(l.submittedAt || l.date) + '</div>' +
     claimantsHtml +
     (actionHtml ? '<div class="bl-actions">' + actionHtml + '</div>' : '') +
+    adminRowHtml +
     '</div>';
 }
-async function blClaimLead(leadId){
+async function blClaimLead(leadId, btn){
   const myName = getHomeUser();
   if(!myName){ banner("bl-banner","err","Pick your name from the Home tab first."); return; }
   const claimName = getBlClaimName();
+  if(btn) btn.disabled = true; // prevent double-claims while in flight
   try {
     const fd = new FormData();
     fd.append("type","claimbookedlead");
@@ -1866,6 +2012,7 @@ async function blClaimLead(leadId){
       : 'You\'ve claimed this lead, ' + myName + '! Ethan will confirm who gets it. 🎉';
     banner("bl-banner","ok", msg);
   } catch(e){ banner("bl-banner","err","Request failed — check connection."); }
+  finally { if(btn) btn.disabled = false; }
 }
 function blFireConfetti(){
   if(typeof confetti === "undefined") return;
@@ -1878,6 +2025,16 @@ function blToggleAdmin(){
   body.style.display = body.style.display === "none" ? "block" : "none";
   if(icon) icon.textContent = blAdminUnlocked ? "🔓" : "🔒";
 }
+function blApplyAdminUnlock(code){
+  blAdminUnlocked = true;
+  blAdminPinStored = code;
+  document.getElementById("bl-admin-gate").style.display = "none";
+  document.getElementById("bl-admin-tools").style.display = "block";
+  document.getElementById("bl-admin-lock-icon").textContent = "🔓";
+  document.getElementById("bl-lead-date").value = nyTodayISO();
+  renderBlClaimsReview();
+  blLoadTodayBookings();
+}
 async function blVerifyAdmin(){
   if(blAdminBusy) return;
   const code = document.getElementById("bl-pin-input").value.trim();
@@ -1888,18 +2045,36 @@ async function blVerifyAdmin(){
   try {
     const res = await fetch(SCRIPT_URL + "?action=checkadminpin&code=" + encodeURIComponent(code) + "&t=" + Date.now());
     const data = await res.json();
-    if(!data.ok){ statusEl.textContent = "Incorrect PIN."; blAdminBusy = false; return; }
-    blAdminUnlocked = true;
-    blAdminPinStored = code;
-    document.getElementById("bl-admin-gate").style.display = "none";
-    document.getElementById("bl-admin-tools").style.display = "block";
-    document.getElementById("bl-admin-lock-icon").textContent = "🔓";
-    document.getElementById("bl-lead-date").value = nyTodayISO();
+    if(!data.ok){
+      statusEl.textContent = data.locked ? "Too many attempts — try again in 10 minutes." : "Incorrect PIN.";
+      clearStoredAdminPin();
+      blAdminBusy = false;
+      return;
+    }
+    setStoredAdminPin(code); // remember the verified PIN on this device
     statusEl.textContent = "";
-    renderBlClaimsReview();
-    blLoadTodayBookings();
+    blApplyAdminUnlock(code);
+    renderBookedLeads(); // re-render cards with admin action buttons
   } catch(e){ statusEl.textContent = "Request failed."; }
   blAdminBusy = false;
+}
+// Silently re-verify a stored PIN when the Bookings tab loads — no re-prompt if still valid.
+let blAdminChecked = false;
+async function blTryStoredAdmin(){
+  if(blAdminUnlocked || blAdminChecked) return;
+  blAdminChecked = true;
+  const pin = getStoredAdminPin();
+  if(!pin) return;
+  try {
+    const res = await fetch(SCRIPT_URL + "?action=checkadminpin&code=" + encodeURIComponent(pin) + "&t=" + Date.now());
+    const data = await res.json();
+    if(data.ok){
+      blApplyAdminUnlock(pin);
+      renderBookedLeads();
+    } else {
+      clearStoredAdminPin(); // PIN changed — require manual unlock again
+    }
+  } catch(e){}
 }
 async function blSubmitLead(){
   if(!blAdminUnlocked) return;
@@ -1907,8 +2082,10 @@ async function blSubmitLead(){
   const leadType = document.querySelector('input[name="bl-type"]:checked').value;
   const dateVal = document.getElementById("bl-lead-date").value || nyTodayISO();
   const statusEl = document.getElementById("bl-submit-status");
+  const btn = document.getElementById("bl-submit-lead-btn");
   if(!emails){ statusEl.textContent = "Enter at least one email address."; return; }
   statusEl.textContent = "Sending…";
+  if(btn) btn.disabled = true; // prevent double-posts + duplicate Telegram pings
   try {
     const fd = new FormData();
     fd.append("type","submitBookedLead");
@@ -1921,6 +2098,7 @@ async function blSubmitLead(){
     blDateISO = dateVal;
     setTimeout(() => { statusEl.textContent = ""; loadBookedLeads(); }, 1200);
   } catch(e){ statusEl.textContent = "Request failed — check connection."; }
+  finally { if(btn) btn.disabled = false; }
 }
 function renderBlClaimsReview(){
   const el = document.getElementById("bl-claims-review");
