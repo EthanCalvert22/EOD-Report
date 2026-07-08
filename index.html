@@ -780,9 +780,21 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
           <div class="field full">
             <label>Lead type</label>
             <div class="bl-type-row">
-              <label><input type="radio" name="bl-type" value="round_robin" checked> Round Robin</label>
-              <label><input type="radio" name="bl-type" value="capital_strategy"> Capital Strategy</label>
+              <label><input type="radio" name="bl-type" value="round_robin" checked onchange="blToggleVpGroup()"> Round Robin</label>
+              <label><input type="radio" name="bl-type" value="capital_strategy" onchange="blToggleVpGroup()"> Capital Strategy</label>
             </div>
+          </div>
+          <div class="field" id="bl-vp-group-field" style="display:none;max-width:260px;">
+            <label>VP Group</label>
+            <select id="bl-vp-group" style="background:rgba(11,22,35,0.65);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;font-family:var(--mono);width:100%;">
+              <option value="">— Select VP Group —</option>
+              <option value="Joe's Team">Joe's Team</option>
+              <option value="Seb's Team">Seb's Team</option>
+              <option value="Adam's Team">Adam's Team</option>
+              <option value="Josh's Team">Josh's Team</option>
+              <option value="Saul's Team">Saul's Team</option>
+              <option value="Luke's Team">Luke's Team</option>
+            </select>
           </div>
           <div class="field" style="max-width:220px;">
             <label>Date (default: today)</label>
@@ -1978,8 +1990,11 @@ function blLeadCardHtml(l, myName, claimName){
     ? '<button class="bl-admin-btn pool" onclick="blCreditToPool(\'' + l.leadId + '\')">→ RR Pool</button>'
     : '';
   const adminRowHtml = (retractBtn || rrPoolBtn) ? '<div class="bl-admin-row">' + retractBtn + rrPoolBtn + '</div>' : '';
+  const vpBadge = (l.type === 'capital_strategy' && l.vpGroup)
+    ? '<span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:5px;font-family:var(--mono);background:rgba(246,173,85,0.15);color:var(--accent);">' + escapeHtml(l.vpGroup) + '</span>'
+    : '';
   return '<div class="bl-lead-card ' + l.status + '">' +
-    '<div class="bl-badges"><span class="bl-type-badge ' + typeCls + '">' + typeLabel + '</span><span class="bl-status-badge">' + statusLabel + '</span></div>' +
+    '<div class="bl-badges"><span class="bl-type-badge ' + typeCls + '">' + typeLabel + '</span>' + vpBadge + '<span class="bl-status-badge">' + statusLabel + '</span></div>' +
     emailHtml +
     '<div class="bl-meta">Posted ' + escapeHtml(l.submittedAt || l.date) + '</div>' +
     claimantsHtml +
@@ -2076,20 +2091,26 @@ async function blTryStoredAdmin(){
     }
   } catch(e){}
 }
+function blToggleVpGroup(){
+  const isCS = document.querySelector('input[name="bl-type"]:checked').value === "capital_strategy";
+  document.getElementById("bl-vp-group-field").style.display = isCS ? "block" : "none";
+}
 async function blSubmitLead(){
   if(!blAdminUnlocked) return;
   const emails = document.getElementById("bl-new-emails").value.trim();
   const leadType = document.querySelector('input[name="bl-type"]:checked').value;
   const dateVal = document.getElementById("bl-lead-date").value || nyTodayISO();
+  const vpGroup = leadType === "capital_strategy" ? (document.getElementById("bl-vp-group").value || "") : "";
   const statusEl = document.getElementById("bl-submit-status");
   const btn = document.getElementById("bl-submit-lead-btn");
   if(!emails){ statusEl.textContent = "Enter at least one email address."; return; }
+  if(leadType === "capital_strategy" && !vpGroup){ statusEl.textContent = "Select a VP Group for Capital Strategy leads."; return; }
   statusEl.textContent = "Sending…";
   if(btn) btn.disabled = true; // prevent double-posts + duplicate Telegram pings
   try {
     const fd = new FormData();
     fd.append("type","submitBookedLead");
-    fd.append("data", JSON.stringify({ adminPin: blAdminPinStored, emails: emails, leadType: leadType, date: dateVal }));
+    fd.append("data", JSON.stringify({ adminPin: blAdminPinStored, emails: emails, leadType: leadType, date: dateVal, vpGroup: vpGroup }));
     const res = await fetch(SCRIPT_URL, { method:"POST", body:fd });
     const data = await res.json();
     if(!data.success){ statusEl.textContent = "Error: " + (data.error || "Unknown"); return; }
