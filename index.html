@@ -857,6 +857,10 @@ const ROUNDROBIN_INFO={
  "Jasper's team (Josh+)": {coreCount:3},
  "Van's team (Luke+)":    {coreCount:5},
 };
+// Allen Marie's team logs bookings "for Saul" (credited to Ethan's Today-sheet
+// row → Saul's Team VP total) — any member of that team gets the extra panel.
+const SAUL_LOGGER_TEAM="Allen Marie's team (LinkedIn+)";
+function canLogForSaul(name){const a=ALL.find(x=>x.name===name);return !!a&&a.team===SAUL_LOGGER_TEAM;}
 function isRoundRobinEligible(name){
  const g=STRUCTURE.find(x=>x.team===ALL.find(a=>a.name===name).team);
  const info=ROUNDROBIN_INFO[g.team];
@@ -977,9 +981,10 @@ function pickBkName(name,btn){
   document.getElementById("b-date").value=nyTodayISO();
   document.getElementById("b-email").value="";document.getElementById("b-company").value="";
   document.getElementById("b-dupe").style.display="none";
-  // Allen also runs outreach for Saul (Ethan's team) on top of her own LinkedIn
-  // bookings — give her a second panel just for those, see submitBookingForSaul().
-  document.getElementById("bk-saul-panel").style.display=(name==="Allen Marie")?"block":"none";
+  // Allen Marie's team also runs outreach for Saul (Ethan's team) on top of
+  // their own LinkedIn bookings — give them a second panel just for those,
+  // see submitBookingForSaul().
+  document.getElementById("bk-saul-panel").style.display=canLogForSaul(name)?"block":"none";
   document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
   document.getElementById("b-saul-date").value=nyTodayISO();
   // Core "capital strategy" members occasionally book on behalf of the Round
@@ -1074,12 +1079,13 @@ async function submitBooking(){
    document.getElementById("b-email").value="";document.getElementById("b-company").value="";document.getElementById("b-dupe").style.display="none";
  }catch(e){banner("bk-banner","err","Request failed — check your connection and try again.");}
 }
-// Allen logging on behalf of Saul (Ethan's team). Still saved under Allen's own
-// name so the leaderboard credits her, but eodCredit:"Ethan" tells the Today
-// sheet to count this meeting toward Ethan's row / Saul's Team total instead of
-// her own LinkedIn Team row — see rebuildToday_v3 in Code_FINAL.gs.
+// A member of Allen Marie's team logging on behalf of Saul (Ethan's team).
+// Still saved under their own name so the leaderboard credits them, but
+// eodCredit:"Ethan" tells the Today sheet to count this meeting toward Ethan's
+// row / Saul's Team total instead of their own LinkedIn Team row — see
+// rebuildToday_v3 in Code_FINAL.gs.
 async function submitBookingForSaul(){
- if(!bkSel||bkSel!=="Allen Marie")return;
+ if(!bkSel||!canLogForSaul(bkSel))return;
  const email=document.getElementById("b-saul-email").value.trim();
  if(!email){banner("bk-banner","err","Please enter the booker's email.");return;}
  const dateVal=document.getElementById("b-saul-date").value;
@@ -1796,9 +1802,9 @@ function renderHomeHub(){
     const liAllowed=isLiLeadsAllowed(name);
     document.getElementById("hub-li-leads").style.display=liAllowed?"":"none";
     document.getElementById("hub-leads").style.display=liAllowed?"none":"";
-    // Allen Marie also logs bookings on behalf of Saul — restore her entry
-    // point to the Log a Booking view (the #v-booking flow already works).
-    document.getElementById("hub-saul").style.display=(name==="Allen Marie")?"":"none";
+    // Allen Marie's team also logs bookings on behalf of Saul — show their
+    // entry point to the Log a Booking view (the #v-booking flow already works).
+    document.getElementById("hub-saul").style.display=canLogForSaul(name)?"":"none";
     sub.textContent="Jump straight into what you need — your name carries over automatically.";
     loadHomeStatsIfNeeded();
   }else{
@@ -1942,14 +1948,8 @@ function renderBookedLeads(){
   } else {
     unclaimedEl.innerHTML = unclaimed.map(l => blLeadCardHtml(l, myName, claimName)).join("");
   }
-  // History section: only leads posted on the selected date
-  const forDate = blLeads.filter(l => l.date === blDateISO);
-  const allEl = document.getElementById("bl-all-list");
-  if(!forDate.length){
-    allEl.innerHTML = '<div class="bl-empty">No bookings posted for this day.</div>';
-  } else {
-    allEl.innerHTML = forDate.map(l => blLeadCardHtml(l, myName, claimName)).join("");
-  }
+  // History section: confirmed bookings for the selected date (fetched from Bookings sheet)
+  blLoadDayBookings();
   if(blAdminUnlocked) renderBlClaimsReview();
 }
 function blLeadCardHtml(l, myName, claimName){
@@ -2198,6 +2198,27 @@ async function blLoadTodayBookings(){
           '<span style="font-size:11px;color:var(--text3);margin-left:8px;">' + escapeHtml(b.email || '—') + '</span>' +
         '</div>' +
         '<button onclick="blDeleteBooking(\'' + ts + '\',\'' + nm + '\')" style="background:rgba(252,129,129,0.15);border:1px solid rgba(252,129,129,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">🗑️ Delete</button>' +
+      '</div>';
+    }).join("");
+  } catch(e){ el.innerHTML = '<div class="bl-empty">Couldn\'t load bookings.</div>'; }
+}
+async function blLoadDayBookings(){
+  const el = document.getElementById("bl-all-list");
+  if(!el) return;
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const res = await fetch(SCRIPT_URL + "?action=allbookingstoday&date=" + blDateISO + "&t=" + Date.now());
+    const rows = await res.json();
+    if(!rows.length){ el.innerHTML = '<div class="bl-empty">No confirmed bookings for this day.</div>'; return; }
+    el.innerHTML = rows.map(b => {
+      const typeTag = b.roundRobinPool
+        ? '<span style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3);border-radius:4px;padding:2px 6px;margin-left:6px;">Round Robin</span>'
+        : (b.eodCredit && b.eodCredit !== b.name ? '<span style="font-size:10px;background:rgba(99,102,241,0.15);color:#6366f1;border:1px solid rgba(99,102,241,0.3);border-radius:4px;padding:2px 6px;margin-left:6px;">Credit → ' + escapeHtml(b.eodCredit) + '</span>' : '');
+      return '<div style="padding:8px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;margin-bottom:6px;">' +
+        '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">' +
+          '<span style="font-size:13px;font-weight:600;color:var(--text);">✅ ' + escapeHtml(b.name) + '</span>' + typeTag +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px;">' + escapeHtml(b.email || '—') + (b.team ? ' · ' + escapeHtml(b.team) : '') + '</div>' +
       '</div>';
     }).join("");
   } catch(e){ el.innerHTML = '<div class="bl-empty">Couldn\'t load bookings.</div>'; }
