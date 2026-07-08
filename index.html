@@ -2134,7 +2134,7 @@ function renderBlClaimsReview(){
       const encSingle = encodeURIComponent(JSON.stringify([name]));
       return '<div class="bl-claim-item">' +
         '<span class="bl-claim-name">' + escapeHtml(name) + '</span>' +
-        '<button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="blConfirmClaim(\'' + l.leadId + '\',' + encSingle + ')">✓ Confirm</button>' +
+        '<button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="blConfirmClaim(\'' + l.leadId + '\',\'' + encSingle + '\')">✓ Confirm</button>' +
         '<button class="btn-danger" style="padding:6px 10px;font-size:12px;" onclick="blRemoveClaim(\'' + l.leadId + '\',\'' + encName + '\')">✕ Remove</button>' +
         '</div>';
     }).join("");
@@ -2142,7 +2142,7 @@ function renderBlClaimsReview(){
     return '<div style="margin-bottom:18px;">' +
       '<div style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">' + typeLabel + ' · ' + escapeHtml(emailPreview) + '</div>' +
       rows +
-      (l.claimants.length > 1 ? '<div style="margin-top:8px;"><button class="btn-primary" style="padding:6px 14px;font-size:12px;" onclick="blConfirmClaim(\'' + l.leadId + '\',' + encAll + ')">✓ Confirm all (' + l.claimants.length + ')</button></div>' : '') +
+      (l.claimants.length > 1 ? '<div style="margin-top:8px;"><button class="btn-primary" style="padding:6px 14px;font-size:12px;" onclick="blConfirmClaim(\'' + l.leadId + '\',\'' + encAll + '\')">✓ Confirm all (' + l.claimants.length + ')</button></div>' : '') +
       '</div>';
   }).join('<div class="section-divider" style="margin:12px 0;"></div>');
 }
