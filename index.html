@@ -365,7 +365,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <button class="hub-card" id="hub-leads" onclick="goHome('leads')"><span class="hc-icon">📇</span><span class="hc-title">Get Leads</span><span class="hc-sub">Claim your next batch of leads.</span></button>
       <button class="hub-card" onclick="goHome('dnc')"><span class="hc-icon">🚫</span><span class="hc-title">Do Not Contact</span><span class="hc-sub">Remove a contact from all lead pools.</span></button>
       <button class="hub-card" onclick="goHome('booked-leads')"><span class="hc-icon">🎯</span><span class="hc-title">Claim a Booking</span><span class="hc-sub">View available booked leads and claim yours.</span></button>
-      <button class="hub-card" id="hub-saul" style="display:none;" onclick="goHome('booking')"><span class="hc-icon">📆</span><span class="hc-title">Log a Booking</span><span class="hc-sub">Log for Saul — plus your own bookings.</span></button>
+      <button class="hub-card" onclick="goHome('booking')"><span class="hc-icon">📆</span><span class="hc-title">Log a Booking</span><span class="hc-sub">Record a confirmed meeting.</span></button>
+      <button class="hub-card" id="hub-saul" style="display:none;" onclick="goHome('booking')"><span class="hc-icon">📆</span><span class="hc-title">Log for Saul</span><span class="hc-sub">Log a capital strategy booking for Saul.</span></button>
       <button class="hub-card" onclick="goHome('eod')"><span class="hc-icon">📝</span><span class="hc-title">Submit EOD</span><span class="hc-sub">Log today's outreaches &amp; follow-ups.</span></button>
     </div>
   </div>
@@ -474,24 +475,10 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
         <label>Your name</label>
         <select id="attName" onchange="onAttNameOrDateChange()">
           <option value="">— Select your name —</option>
-          <optgroup label="Joe's Team">
-            <option>Jesusa</option><option>Mark</option>
-          </optgroup>
-          <optgroup label="Seb's Team">
-            <option>Mae</option><option>Jade Rellora</option>
-          </optgroup>
-          <optgroup label="Adam's Team">
-            <option>Sheena</option><option>Pat</option>
-          </optgroup>
-          <optgroup label="Josh's Team">
-            <option>Jasper</option>
-          </optgroup>
-          <optgroup label="Saul's Team">
-            <option>Allen</option><option>Janrobin</option>
-          </optgroup>
-          <optgroup label="Luke's Team">
-            <option>Van</option>
-          </optgroup>
+          <option>Allen</option><option>Mae</option><option>Sheena</option>
+          <option>Van</option><option>Jesusa</option><option>Jasper</option>
+          <option>Jade Rellora</option><option>Janrobin</option>
+          <option>Pat</option><option>Mark</option>
         </select>
       </div>
       <div class="field">
@@ -716,7 +703,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   </div>
   <!-- Admin area (PIN-gated, collapsible) -->
   <div class="bl-admin-area">
-    <button class="bl-admin-toggle" onclick="blToggleAdmin()">
+    <button class="bl-admin-toggle" id="bl-admin-toggle-btn" onclick="blToggleAdmin()" style="display:none;">
       <span id="bl-admin-lock-icon">🔒</span> Admin — Submit &amp; Review Claims
     </button>
     <div id="bl-admin-body" style="display:none;" class="bl-admin-body">
@@ -835,7 +822,7 @@ function pickEodName(name,btn){
   eodSel=name;eodAlready=false;
   document.querySelectorAll("#eod-names .name-chip").forEach(x=>x.classList.remove("selected"));
   if(btn)btn.classList.add("selected");
-  document.getElementById("eod-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
+  document.getElementById("eod-person").textContent=name;
   document.getElementById("rm-name").textContent=name;
   document.getElementById("eod-names").style.display="none";
   document.getElementById("eod-panel").style.display="block";
@@ -920,7 +907,7 @@ function pickBkName(name,btn){
   bkSel=name;
   document.querySelectorAll("#bk-names .name-chip").forEach(x=>x.classList.remove("selected"));
   if(btn)btn.classList.add("selected");
-  document.getElementById("bk-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
+  document.getElementById("bk-person").textContent=name;
   document.getElementById("bk-names").style.display="none";
   document.getElementById("bk-form").style.display="block";
   document.getElementById("b-date").value=nyTodayISO();
@@ -1892,6 +1879,8 @@ function blApplyAdminUnlock(code){
   document.getElementById("bl-admin-gate").style.display = "none";
   document.getElementById("bl-admin-tools").style.display = "block";
   document.getElementById("bl-admin-lock-icon").textContent = "🔓";
+  const toggleBtn = document.getElementById("bl-admin-toggle-btn");
+  if(toggleBtn) toggleBtn.style.display = "flex";
   document.getElementById("bl-lead-date").value = nyTodayISO();
   renderBlClaimsReview();
   blLoadTodayBookings();
