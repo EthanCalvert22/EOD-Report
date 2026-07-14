@@ -75,7 +75,6 @@ h1{font-size:27px;font-weight:800;margin-bottom:6px;letter-spacing:-0.01em;}
 .name-chip:hover{border-color:var(--blue-light);color:var(--text);background:var(--card2);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
 .name-chip:active{transform:translateY(0);}
 .name-chip.selected{border-color:var(--blue-light);background:rgba(66,153,225,0.16);color:var(--blue-light);box-shadow:0 0 0 1px rgba(66,153,225,0.35) inset;}
-.name-chip.senior::after{content:" ★";color:var(--accent);}
 .form-card{background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025));border:1px solid var(--border2);border-radius:var(--radius);padding:24px;margin-bottom:18px;box-shadow:var(--shadow-sm);transition:box-shadow .2s var(--ease),border-color .2s var(--ease);}
 .form-card:hover{border-color:rgba(255,255,255,0.16);box-shadow:var(--shadow-md);}
 .form-card h3{font-size:13px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:16px;font-family:var(--mono);}
@@ -102,7 +101,6 @@ h1{font-size:27px;font-weight:800;margin-bottom:6px;letter-spacing:-0.01em;}
 .extra-opts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .opt-btn{padding:10px 16px;border-radius:9px;border:1px solid var(--border2);background:var(--card);color:var(--text2);font-size:13px;cursor:pointer;transition:border-color .15s var(--ease),color .15s var(--ease),transform .15s var(--ease);}
 .opt-btn:hover{border-color:var(--blue-light);color:var(--text);transform:translateY(-1px);}
-.opt-btn.senior{border-color:rgba(246,173,85,0.4);color:var(--accent);}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
 .metric{background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));border:1px solid var(--border2);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);transition:transform .15s var(--ease),box-shadow .15s var(--ease);}
 .metric:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
@@ -269,6 +267,45 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </style>
 </head>
 <body>
+<!-- ===================== SITE ACCESS GATE ===================== -->
+<!-- Change SITE_CODE below to whatever word/code you want to share with the 10 associates. -->
+<!-- Old associates who try the URL will hit this gate and cannot proceed without the code.  -->
+<div id="site-gate" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;">
+  <div style="font-family:var(--sans);font-size:22px;font-weight:700;color:var(--text);">EOD // Associate Team</div>
+  <div style="font-size:13px;color:var(--text2);margin-top:-8px;">Enter your access code to continue</div>
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;">
+    <input type="password" id="site-code-input" placeholder="Access code" autocomplete="off"
+      style="background:rgba(255,255,255,0.06);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;color:var(--text);font-size:15px;font-family:var(--mono);outline:none;width:100%;"
+      onkeydown="if(event.key==='Enter')siteGateVerify()">
+    <button onclick="siteGateVerify()"
+      style="background:var(--blue);border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:600;font-family:var(--sans);cursor:pointer;width:100%;">
+      Enter →
+    </button>
+    <div id="site-gate-err" style="font-size:12px;color:var(--red);text-align:center;min-height:16px;"></div>
+  </div>
+</div>
+<script>
+(function(){
+  const SITE_CODE = "NASSAU2026"; // ← change this to whatever you want
+  const SITE_KEY  = "nsp_site_access";
+  function siteGateVerify(){
+    const val=(document.getElementById("site-code-input").value||"").trim();
+    if(val===SITE_CODE){
+      try{localStorage.setItem(SITE_KEY,"1");}catch(e){}
+      document.getElementById("site-gate").style.display="none";
+    } else {
+      document.getElementById("site-gate-err").textContent="Incorrect code — try again.";
+      document.getElementById("site-code-input").value="";
+    }
+  }
+  window.siteGateVerify=siteGateVerify;
+  // Check on load — if code already verified on this device, skip the gate
+  let granted=false;try{granted=localStorage.getItem(SITE_KEY)==="1";}catch(e){}
+  if(!granted){
+    document.getElementById("site-gate").style.display="flex";
+  }
+})();
+</script>
 <div class="topbar">
   <div class="logo">EOD // Associate Team</div>
   <div class="nav-tabs">
@@ -326,7 +363,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div class="hub-grid">
       <button class="hub-card" onclick="goHome('attendance')"><span class="hc-icon">✅</span><span class="hc-title">Attendance</span><span class="hc-sub">Mark present, or file VL/SL.</span></button>
       <button class="hub-card" id="hub-leads" onclick="goHome('leads')"><span class="hc-icon">📇</span><span class="hc-title">Get Leads</span><span class="hc-sub">Claim your next batch of leads.</span></button>
-      <button class="hub-card" id="hub-li-leads" style="display:none;" onclick="goHome('li-leads')"><span class="hc-icon">🔗</span><span class="hc-title">Get Leads</span><span class="hc-sub">Claim your next LinkedIn leads batch.</span></button>
       <button class="hub-card" onclick="goHome('dnc')"><span class="hc-icon">🚫</span><span class="hc-title">Do Not Contact</span><span class="hc-sub">Remove a contact from all lead pools.</span></button>
       <button class="hub-card" onclick="goHome('booked-leads')"><span class="hc-icon">🎯</span><span class="hc-title">Claim a Booking</span><span class="hc-sub">View available booked leads and claim yours.</span></button>
       <button class="hub-card" id="hub-saul" style="display:none;" onclick="goHome('booking')"><span class="hc-icon">📆</span><span class="hc-title">Log a Booking</span><span class="hc-sub">Log for Saul — plus your own bookings.</span></button>
@@ -338,7 +374,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 <div class="view" id="v-eod">
   <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
   <h1>End of Day Report</h1>
-  <p class="sub">Pick your name, enter today's numbers, submit. Seniors (★) get extra options.</p>
+  <p class="sub">Pick your name, enter today's numbers, submit.</p>
   <div class="banner" id="eod-banner"></div>
   <div id="eod-names"></div>
   <div id="eod-panel" style="display:none">
@@ -346,11 +382,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div id="eod-form">
       <div id="eod-already" style="display:none;background:rgba(246,173,85,0.12);border:1px solid rgba(246,173,85,0.4);color:var(--accent);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;">✓ You've already submitted today. You can adjust your numbers below and tap <b>Update my submission</b> — this replaces your earlier entry rather than adding a new one.</div>
       <div class="form-card"><h3 id="eod-person">—</h3>
+        <p style="font-size:13px;color:var(--text2);margin:-6px 0 14px;">📨 Your 80 initial outreaches are sent automatically each day — no email counts to report.</p>
         <div class="field-grid">
-          <div class="field"><label>Initial Outreaches sent (Gmail)</label><input type="number" id="e-gmail" min="0" value="0"></div>
-          <div class="field"><label>Email views (Gmail)</label><input type="number" id="e-gviews" min="0" value="0"></div>
-          <div class="field"><label>Initial Outreaches sent (Outlook)</label><input type="number" id="e-outlook" min="0" value="0"></div>
-          <div class="field"><label>Email views (Outlook)</label><input type="number" id="e-oviews" min="0" value="0"></div>
           <div class="field"><label>Follow-ups sent</label><input type="number" id="e-fu" min="0" value="0"></div>
           <div class="field"><label>Meetings booked today <span style="color:var(--text3);font-size:11px;">(auto, from Log Booking)</span></label><input type="number" id="e-mtg-display" value="0" disabled style="opacity:0.6;"></div>
         </div>
@@ -364,8 +397,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div class="row"><button class="btn-danger" onclick="removeEOD()">Yes, remove today's EOD</button><button class="btn-secondary" onclick="showEODForm()">← Back</button></div>
     </div>
     <div id="eod-comment" style="display:none">
-      <div class="form-card"><h3>Senior EOD comment</h3>
-        <div class="field full"><label>Your comment (visible to admin only)</label><textarea id="c-text" placeholder="How did your team do today? Any blockers, wins, or notes…"></textarea></div>
+      <div class="form-card"><h3>EOD comment</h3>
+        <div class="field full"><label>Your comment (visible to admin only)</label><textarea id="c-text" placeholder="How did your day go? Any blockers, wins, or notes…"></textarea></div>
       </div>
       <div class="row"><button class="btn-primary" onclick="submitComment()">Submit comment</button><button class="btn-secondary" onclick="showEODForm()">← Back</button></div>
     </div>
@@ -441,35 +474,23 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
         <label>Your name</label>
         <select id="attName" onchange="onAttNameOrDateChange()">
           <option value="">— Select your name —</option>
-          <optgroup label="Jesusa's Team">
-            <option>Jesusa</option><option>Mark</option><option>Hervic</option>
-            <option>Alma</option><option>James Vaughn</option><option>Aiza</option>
-            <option>Michelle</option><option>Carina</option>
+          <optgroup label="Joe's Team">
+            <option>Jesusa</option><option>Mark</option>
           </optgroup>
-          <optgroup label="Mae's Team">
-            <option>Mae</option><option>Jade</option><option>Lovely</option>
-            <option>Ivony</option><option>Tony</option><option>Manuel</option>
-            <option>Clarence Barbs</option><option>Dayrain</option><option>Charlot</option>
+          <optgroup label="Seb's Team">
+            <option>Mae</option><option>Jade Rellora</option>
           </optgroup>
-          <optgroup label="Sheena's Team">
-            <option>Sheena</option><option>Pat</option><option>Anthony</option>
-            <option>Ernst</option><option>Francis</option><option>King Lennard</option>
-            <option>Rica Rei</option><option>Jose Bendano</option>
+          <optgroup label="Adam's Team">
+            <option>Sheena</option><option>Pat</option>
           </optgroup>
-          <optgroup label="Allen Marie's Team">
-            <option>Allen Marie</option><option>Irene</option><option>Dominic</option>
-            <option>Lorenz</option><option>Janrobin</option><option>Edd</option>
-            <option>Jonnie</option><option>Molit</option><option>Rey</option>
+          <optgroup label="Josh's Team">
+            <option>Jasper</option>
           </optgroup>
-          <optgroup label="Jasper's Team">
-            <option>Jasper</option><option>Riri</option><option>Ros</option>
-            <option>Jameson</option><option>Jade Lumontad</option>
-            <option>Hazel Mae Jeminez</option><option>Elmar Estrada</option><option>Goretti</option>
+          <optgroup label="Saul's Team">
+            <option>Allen</option><option>Janrobin</option>
           </optgroup>
-          <optgroup label="Van's Team">
-            <option>Van</option><option>Maru</option><option>Mylaine</option>
-            <option>Kim</option><option>Ivy</option><option>Hiro Wayne</option>
-            <option>Rona</option><option>Charmaine Booc</option>
+          <optgroup label="Luke's Team">
+            <option>Van</option>
           </optgroup>
         </select>
       </div>
@@ -564,11 +585,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       </div>
       <div class="banner" id="leave-mgmt-banner" style="margin-bottom:6px;font-size:12px;"></div>
       <div id="leave-entries-list"><div class="loading" style="font-size:12px;">Loading…</div></div>
-      <div id="admin-leave-gate" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="password" class="pin-input" id="admin-leave-pin" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')verifyAdminLeave()">
-        <button class="btn-secondary" style="padding:8px 12px;font-size:12px;" onclick="verifyAdminLeave()">Unlock →</button>
-        <span id="admin-leave-pin-status" style="font-size:11px;color:var(--text3);"></span>
-      </div>
+      <!-- Leave admin auto-unlocked for Allen & Sheena only — no PIN prompt -->
+      <div id="admin-leave-gate" style="display:none;"></div>
+      <span id="admin-leave-pin-status" style="font-size:11px;color:var(--text3);display:none;"></span>
       <input type="hidden" id="leave-del-pin">
     </div>
   </div>
@@ -633,11 +652,11 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div class="row"><button class="btn-secondary" onclick="backLeads()">← Back</button></div>
   </div>
 </div>
-<!-- UNIFIED DO NOT CONTACT — removes from both Leads and LinkedIn Leads pools -->
+<!-- UNIFIED DO NOT CONTACT -->
 <div class="view" id="v-dnc">
   <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
   <h1>Do Not Contact</h1>
-  <p class="sub">Removes the contact from all lead pools (regular and LinkedIn) and adds them to the shared Do Not Contact list.</p>
+  <p class="sub">Removes the contact from the leads pool and adds them to the shared Do Not Contact list.</p>
   <div class="banner" id="dnc-banner"></div>
   <div id="dnc-panel">
     <div class="form-card">
@@ -652,65 +671,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
     <div class="row">
       <button class="btn-danger" onclick="submitUnifiedDNC()">Remove from all lead pools</button>
-    </div>
-  </div>
-</div>
-<!-- LINKEDIN LEADS (passcode-gated, separate pool from the regular Leads tab) -->
-<div class="view" id="v-li-leads">
-  <button class="btn-secondary" style="margin-bottom:10px;" onclick="showHomePicker()">← Home</button>
-  <h1>LinkedIn Leads</h1>
-  <p class="sub">A separate leads pool for the LinkedIn team. Enter the shared passcode once — this device will remember it after that.</p>
-  <div class="banner" id="li-banner"></div>
-
-  <div id="li-gate">
-    <div class="form-card" style="max-width:360px;">
-      <h3>Enter passcode</h3>
-      <div class="field full">
-        <label>Passcode</label>
-        <input type="password" class="pin-input" id="li-passcode-input" placeholder="Enter passcode" onkeydown="if(event.key==='Enter')checkLiPasscode()">
-      </div>
-      <div class="row" style="margin-top:10px;"><button class="btn-primary" onclick="checkLiPasscode()">Unlock →</button></div>
-      <div id="li-gate-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
-    </div>
-  </div>
-
-  <div id="li-unlocked" style="display:none">
-    <div id="li-names"></div>
-    <div id="li-panel" style="display:none">
-      <div class="section-head"><span class="dot-mark" style="background:var(--blue-light);"></span><span class="sectlabel" style="margin:0;color:var(--text2);">Claim LinkedIn leads</span></div>
-      <div class="form-card" style="border-color:rgba(66,153,225,0.25);">
-        <h3 id="li-person">—</h3>
-        <div class="row">
-          <div class="field" style="max-width:220px;">
-            <label>Number of leads (max 150)</label>
-            <input type="number" id="li-count" min="1" max="150" value="150">
-          </div>
-          <button class="btn-primary" id="li-claim-btn" onclick="claimLiLeads()">Get LinkedIn Leads</button>
-        </div>
-        <div class="pool-note" id="li-pool-note"></div>
-        <div id="li-claim-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
-        <div id="li-claim-result"></div>
-      </div>
-
-      <div class="section-divider"></div>
-      <div class="section-head"><span class="dot-mark" style="background:var(--red);"></span><span class="sectlabel" style="margin:0;color:var(--text2);">Remove from LinkedIn Leads</span></div>
-      <p class="sub" style="margin:4px 0 16px;font-size:13px;">Removed entries are added to the same shared Do Not Contact list used by the regular Leads tab.</p>
-      <div class="form-card" style="border-color:rgba(252,129,129,0.22);">
-        <h3>Remove leads / Do Not Contact</h3>
-        <div class="field full">
-          <label>Paste exact emails (one per line, or comma-separated) or a domain like @company.com</label>
-          <textarea id="li-remove-input" placeholder="jane@company.com&#10;john@other.com&#10;@blockedco.com"></textarea>
-        </div>
-        <div class="field full">
-          <label>Reason (your comment — e.g. "Unsubscribed", "Bounced", "Wrong contact")</label>
-          <input type="text" id="li-remove-reason" placeholder="Why is this being added to Do Not Contact?">
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <button class="btn-danger" id="li-remove-btn" onclick="removeLiLeadsUI()">Remove from LinkedIn Leads</button>
-        </div>
-        <div id="li-remove-status" style="font-size:13px;color:var(--text2);margin-top:6px;"></div>
-      </div>
-      <div class="row"><button class="btn-secondary" onclick="backLiLeads()">← Back</button></div>
     </div>
   </div>
 </div>
@@ -760,15 +720,8 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <span id="bl-admin-lock-icon">🔒</span> Admin — Submit &amp; Review Claims
     </button>
     <div id="bl-admin-body" style="display:none;" class="bl-admin-body">
-      <!-- PIN gate (shown until verified) -->
-      <div id="bl-admin-gate">
-        <div class="field" style="max-width:260px;margin-bottom:14px;">
-          <label>Admin PIN</label>
-          <input type="password" class="pin-input" id="bl-pin-input" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')blVerifyAdmin()">
-        </div>
-        <button class="btn-primary" onclick="blVerifyAdmin()">Unlock →</button>
-        <div id="bl-pin-status" style="font-size:12px;color:var(--red);margin-top:8px;"></div>
-      </div>
+      <!-- Admin auto-unlocked for Allen & Sheena only — no PIN prompt -->
+      <div id="bl-admin-gate" style="display:none;"></div>
       <!-- Admin tools — visible after PIN verified -->
       <div id="bl-admin-tools" style="display:none;">
         <div class="form-card" style="border-color:rgba(246,173,85,0.3);">
@@ -823,69 +776,57 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
 </div>
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw9n1IzAnZO6J14EMmasZaJaDzNPG4cENzQhluMGEaMzl7FA7eEjYqyOZC9n2cVqc7Rng/exec";
-const SENIORS=["Jesusa","Mae","Sheena","Jasper","Allen Marie","Van"];
+// Admin access is limited to the two seniors — Allen and Sheena. Everyone
+// else gets the standard associate view (no admin unlock, no claim-on-behalf).
+const ADMIN_NAMES=["Allen","Sheena"];
+// Canonical flat list of all 10 associates — drives the Home/EOD/Booking/Leads
+// name grids and the Bookings-tab dropdowns. No team groupings, no stars —
+// every associate renders identically.
+const ASSOCIATES=["Allen","Mae","Sheena","Van","Jesusa","Jasper","Jade Rellora","Janrobin","Pat","Mark"];
+// STRUCTURE is kept ONLY as a team lookup (Bookings col D, leaderboard team
+// race cards, admin table grouping). The Home screen and name pickers no
+// longer render these groups — see buildNames(), which uses ASSOCIATES.
+// "Josh's Team" is the NEW Josh (not Josh Post, who is no longer a VP).
 const STRUCTURE=[
- {team:"Jesusa's team (Joe+)",   members:["Jesusa","Mark","Hervic","Alma","James Vaughn","Aiza","Michelle","Carina"]},
- {team:"Mae's team (Seb+)",      members:["Mae","Jade","Lovely","Ivony","Tony","Manuel","Clarence Barbs","Dayrain","Charlot"]},
- {team:"Sheena's team (Adam+)",  members:["Sheena","Pat","Anthony","Ernst","Francis","King Lennard","Rica Rei","Jose Bendano"]},
- {team:"Allen Marie's team (LinkedIn+)", members:["Allen Marie","Irene","Dominic","Lorenz","Janrobin","Edd","Jonnie","Molit","Rey"]},
- {team:"Jasper's team (Josh+)",  members:["Jasper","Riri","Ros","Jameson","Jade Lumontad","Hazel Mae Jeminez","Elmar Estrada","Goretti"]},
- {team:"Van's team (Luke+)",     members:["Van","Maru","Mylaine","Kim","Ivy","Hiro Wayne","Rona","Charmaine Booc"]},
+ {team:"Joe's Team",  members:["Jesusa","Mark"]},       // CHECK VP ASSIGNMENT — Jesusa (lead under Joe), Mark (Jesusa's team)
+ {team:"Seb's Team",  members:["Mae","Jade Rellora"]},  // CHECK VP ASSIGNMENT — Mae (team under Seb), Jade Rellora (previously "Jade", Mae's team)
+ {team:"Adam's Team", members:["Sheena","Pat"]},        // CHECK VP ASSIGNMENT — Sheena (team under Adam), Pat (Sheena's team)
+ {team:"Josh's Team", members:["Jasper"]},              // CHECK VP ASSIGNMENT — Jasper under the NEW Josh (not Josh Post)
+ {team:"Saul's Team", members:["Allen","Janrobin"]},    // CHECK VP ASSIGNMENT — Allen (capital strategy for Saul), Janrobin (Allen → Saul pipeline)
+ {team:"Luke's Team", members:["Van"]},                 // CHECK VP ASSIGNMENT — Van (team under Luke)
 ];
 const ALL=[];STRUCTURE.forEach(g=>g.members.forEach(m=>ALL.push({name:m,team:g.team})));
 const TEAMCOLORS={
- "Jesusa's team (Joe+)":  "#888780",
- "Mae's team (Seb+)":     "#E8B923",
- "Sheena's team (Adam+)": "#1D9E75",
- "Allen Marie's team (LinkedIn+)":"#4299E1",
- "Jasper's team (Josh+)": "#7F77DD",
- "Van's team (Luke+)":    "#378ADD",
+ "Joe's Team":  "#888780",
+ "Seb's Team":  "#E8B923",
+ "Adam's Team": "#1D9E75",
+ "Josh's Team": "#7F77DD",
+ "Saul's Team": "#4299E1",
+ "Luke's Team": "#378ADD",
 };
-// Each "capital strategy" team has a handful of core VP-team members (the first
-// coreCount names in STRUCTURE for that team) plus several dedicated Round Robin
-// Email Leads members further down the list. Core members occasionally book on
-// behalf of the round robin pool too — this lets them flag that specific booking
-// as a pooled Round Robin booking (see submitBookingForRoundRobin). It's added
-// straight into the EOD Report's pooled Round Robin total, without crediting any
-// single teammate's personal row. Not needed for the LinkedIn team (they have
-// their own round robin link/process already) or for round-robin members
-// themselves (their own bookings already count toward that pool).
-const ROUNDROBIN_INFO={
- "Jesusa's team (Joe+)":  {coreCount:4},
- "Mae's team (Seb+)":     {coreCount:4},
- "Sheena's team (Adam+)": {coreCount:3},
- "Jasper's team (Josh+)": {coreCount:3},
- "Van's team (Luke+)":    {coreCount:5},
-};
-// Allen Marie's team logs bookings "for Saul" (credited to Ethan's Today-sheet
-// row → Saul's Team VP total) — any member of that team gets the extra panel.
-const SAUL_LOGGER_TEAM="Allen Marie's team (LinkedIn+)";
-function canLogForSaul(name){const a=ALL.find(x=>x.name===name);return !!a&&a.team===SAUL_LOGGER_TEAM;}
-function isRoundRobinEligible(name){
- const g=STRUCTURE.find(x=>x.team===ALL.find(a=>a.name===name).team);
- const info=ROUNDROBIN_INFO[g.team];
- if(!info)return false;
- const idx=g.members.indexOf(name);
- return idx>-1&&idx<info.coreCount;
-}
+// Round Robin is now the main booking flow — every associate sends 80
+// automated IOs and works the round robin link, so any of the 10 can flag a
+// specific booking as a pooled Round Robin booking (see
+// submitBookingForRoundRobin). It's added straight into the EOD Report's
+// pooled Round Robin total without crediting any individual's personal row.
+function isRoundRobinEligible(name){return ALL.some(a=>a.name===name);}
+// "Log for Saul": gated directly on name now that team groupings are gone.
+// Allen (and Janrobin, who came through the same Saul pipeline) run capital
+// strategy outreach for Saul — bookings logged there are credited to Ethan's
+// Today-sheet row.
+const SAUL_LOGGERS=["Allen","Janrobin"];
+function canLogForSaul(name){return SAUL_LOGGERS.includes(name);}
 function nyTodayISO(){return new Date().toLocaleString("en-CA",{timeZone:"America/New_York"}).split(",")[0];}
 function nyDDMM(){return new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",day:"2-digit",month:"2-digit",year:"numeric"});}
 function initials(n){return n.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();}
 document.getElementById("dateb").textContent=new Date().toLocaleDateString("en-GB",{timeZone:"America/New_York",weekday:"short",day:"numeric",month:"short"});
+// Flat name grid — all 10 associates as identical buttons, no team blocks,
+// no headers, no senior stars.
 function buildNames(containerId,onPick){
  const c=document.getElementById(containerId);
- STRUCTURE.forEach(g=>{
-  const color=TEAMCOLORS[g.team]||"var(--blue-light)";
-  const block=document.createElement("div");block.className="team-block";block.style.setProperty("--team-color",color);
-  const header=document.createElement("div");header.className="team-block-header";
-  const title=document.createElement("div");title.className="team-block-title";title.textContent=g.team;
-  const count=document.createElement("div");count.className="team-block-count";count.textContent=g.members.length+" member"+(g.members.length===1?"":"s");
-  header.appendChild(title);header.appendChild(count);block.appendChild(header);
-  const grid=document.createElement("div");grid.className="name-grid";
-  g.members.forEach(name=>{const b=document.createElement("button");b.className="name-chip"+(SENIORS.includes(name)?" senior":"");b.textContent=name;b.onclick=()=>onPick(name,b);grid.appendChild(b);});
-  block.appendChild(grid);
-  c.appendChild(block);
- });
+ const grid=document.createElement("div");grid.className="name-grid";
+ ASSOCIATES.forEach(name=>{const b=document.createElement("button");b.className="name-chip";b.textContent=name;b.onclick=()=>onPick(name,b);grid.appendChild(b);});
+ c.appendChild(grid);
 }
 /* ===================== EOD ===================== */
 let eodSel=null,eodAlready=false;
@@ -900,8 +841,9 @@ function pickEodName(name,btn){
   document.getElementById("eod-panel").style.display="block";
   const extra=document.getElementById("eod-extra");extra.innerHTML="";
   const rm=document.createElement("button");rm.className="opt-btn";rm.textContent="Remove today's EOD";rm.onclick=showRemove;extra.appendChild(rm);
-  if(SENIORS.includes(name)){const cm=document.createElement("button");cm.className="opt-btn senior";cm.textContent="★ Leave EOD comment";cm.onclick=showComment;extra.appendChild(cm);}
-  ["e-gmail","e-gviews","e-outlook","e-oviews","e-fu"].forEach(id=>document.getElementById(id).value=0);
+  // Everyone can leave an EOD comment — no seniority restriction.
+  const cm=document.createElement("button");cm.className="opt-btn";cm.textContent="Leave EOD comment";cm.onclick=showComment;extra.appendChild(cm);
+  ["e-fu"].forEach(id=>document.getElementById(id).value=0);
   document.getElementById("e-mtg-display").value=0;
   document.getElementById("eod-already").style.display="none";
   document.getElementById("eod-submit-btn").textContent="Submit EOD";
@@ -927,8 +869,11 @@ async function submitEOD(){
  const btn=document.getElementById("eod-submit-btn");
  btn.disabled=true;
  try{
+   // Email fields are gone — 80 initial outreaches are sent automatically per
+   // associate (see AUTO_IO_PER_ASSOCIATE in Code_FINAL.gs). Zeros are still
+   // sent for the legacy email keys so the sheet's column layout stays intact.
    const fd=new FormData();fd.append("type","eod");
-   fd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:0,followups:+v("e-fu")}));
+   fd.append("data",JSON.stringify({name:eodSel,gmailEmails:0,gmailViews:0,outlookEmails:0,outlookViews:0,meetings:0,followups:+v("e-fu")}));
    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
    const data=await res.json();
    if(!postOk(data)){banner("eod-banner","err","Submission failed — please try again.");return;}
@@ -956,7 +901,7 @@ async function submitComment(){
    // the form fields (which reset to 0 on name pick) would overwrite them with zeros.
    if(!eodAlready){
      const eodFd=new FormData();eodFd.append("type","eod");
-     eodFd.append("data",JSON.stringify({name:eodSel,gmailEmails:+v("e-gmail"),gmailViews:+v("e-gviews"),outlookEmails:+v("e-outlook"),outlookViews:+v("e-oviews"),meetings:0,followups:+v("e-fu")}));
+     eodFd.append("data",JSON.stringify({name:eodSel,gmailEmails:0,gmailViews:0,outlookEmails:0,outlookViews:0,meetings:0,followups:+v("e-fu")}));
      const eodRes=await fetch(SCRIPT_URL,{method:"POST",body:eodFd});
      const eodData=await eodRes.json();
      if(!postOk(eodData)){banner("eod-banner","err","EOD submission failed — please try again.");return;}
@@ -981,14 +926,14 @@ function pickBkName(name,btn){
   document.getElementById("b-date").value=nyTodayISO();
   document.getElementById("b-email").value="";document.getElementById("b-company").value="";
   document.getElementById("b-dupe").style.display="none";
-  // Allen Marie's team also runs outreach for Saul (Ethan's team) on top of
-  // their own LinkedIn bookings — give them a second panel just for those,
-  // see submitBookingForSaul().
+  // Saul's Team associates (Allen + Janrobin) run capital strategy outreach
+  // for Saul on top of their own bookings — give them a second panel just
+  // for those, see submitBookingForSaul().
   document.getElementById("bk-saul-panel").style.display=canLogForSaul(name)?"block":"none";
   document.getElementById("b-saul-email").value="";document.getElementById("b-saul-company").value="";
   document.getElementById("b-saul-date").value=nyTodayISO();
-  // Core "capital strategy" members occasionally book on behalf of the Round
-  // Robin Email Leads pool too — show the panel only if eligible (see
+  // Round Robin is now the main booking flow — every associate can log a
+  // booking on behalf of the pooled Round Robin total (see
   // isRoundRobinEligible()).
   document.getElementById("bk-rr-panel").style.display=isRoundRobinEligible(name)?"block":"none";
   document.getElementById("b-rr-email").value="";document.getElementById("b-rr-company").value="";
@@ -1079,10 +1024,10 @@ async function submitBooking(){
    document.getElementById("b-email").value="";document.getElementById("b-company").value="";document.getElementById("b-dupe").style.display="none";
  }catch(e){banner("bk-banner","err","Request failed — check your connection and try again.");}
 }
-// A member of Allen Marie's team logging on behalf of Saul (Ethan's team).
+// A Saul's Team associate (Allen or Janrobin) logging on behalf of Saul.
 // Still saved under their own name so the leaderboard credits them, but
-// eodCredit:"Ethan" tells the Today sheet to count this meeting toward Ethan's
-// row / Saul's Team total instead of their own LinkedIn Team row — see
+// eodCredit:"Ethan" tells the Today sheet to count this meeting toward
+// Ethan's row / Saul's Team total instead of their own row — see
 // rebuildToday_v3 in Code_FINAL.gs.
 async function submitBookingForSaul(){
  if(!bkSel||!canLogForSaul(bkSel))return;
@@ -1399,9 +1344,27 @@ let adminLeavePin = "";
 // and silently re-verified against the server on load. Cleared whenever a
 // check fails (PIN may have changed).
 const ADMIN_PIN_KEY = "nsp_admin_pin";
-function getStoredAdminPin(){ try { return localStorage.getItem(ADMIN_PIN_KEY) || ""; } catch(e){ return ""; } }
-function setStoredAdminPin(pin){ try { localStorage.setItem(ADMIN_PIN_KEY, pin); } catch(e){} }
-function clearStoredAdminPin(){ try { localStorage.removeItem(ADMIN_PIN_KEY); } catch(e){} }
+// Admin access is limited to ADMIN_NAMES (Allen + Sheena) — auto-unlocked for
+// them with no PIN prompt; everyone else keeps the standard associate view.
+// The PIN is still passed to the backend for API-level security.
+const TEAM_ADMIN_PIN = "ETH2026";
+function isAdminUser(){ return ADMIN_NAMES.includes(getHomeUser()||""); }
+// Only admins ever get the stored PIN — this also gates the silent re-verify
+// paths (blTryStoredAdmin / leaveTryStoredAdmin) so non-admins can't unlock.
+function getStoredAdminPin(){ return isAdminUser() ? TEAM_ADMIN_PIN : ""; }
+function setStoredAdminPin(pin){ /* no-op — admin unlock derives from ADMIN_NAMES */ }
+function clearStoredAdminPin(){ /* no-op */ }
+
+// Auto-unlock admin gates for Allen and Sheena ONLY. Called on name selection
+// and whenever the Bookings or Admin tab opens. Any other associate simply
+// keeps the standard view — no admin tools, no delete buttons.
+function autoUnlockAdmin(){
+  const name = getHomeUser();
+  if(!name || !ALL.find(x=>x.name===name)) return;
+  if(!ADMIN_NAMES.includes(name)) return;
+  if(!blAdminUnlocked) blApplyAdminUnlock(TEAM_ADMIN_PIN);
+  if(!adminLeavePin) applyLeaveAdminUnlock(TEAM_ADMIN_PIN);
+}
 function applyLeaveAdminUnlock(pin){
   adminLeavePin = pin;
   document.getElementById("leave-del-pin").value = pin;
@@ -1612,7 +1575,7 @@ async function removeLeadsUI(){
     const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
     const data=await res.json();
     if(!data.success){statusEl.textContent="Error: "+data.error;return;}
-    statusEl.textContent=data.addedToDncCount+" added to Do Not Contact ("+data.removedFromLeadsCount+" matched an active lead and was marked removed, "+(data.removedFromLiLeadsCount||0)+" matched in LinkedIn Leads).";
+    statusEl.textContent=data.addedToDncCount+" added to Do Not Contact ("+data.removedFromLeadsCount+" matched an active lead and was marked removed).";
     document.getElementById("ld-remove-input").value="";
     document.getElementById("ld-remove-reason").value="";
     searchDNC();
@@ -1657,121 +1620,8 @@ async function submitUnifiedDNC(){
     if(!data.success){banner('dnc-banner','err','Error: '+(data.error||'Unknown error'));return;}
     document.getElementById('dnc-input').value='';
     document.getElementById('dnc-reason').value='';
-    banner('dnc-banner','ok','Done — '+data.addedToDncCount+' contact(s) added to Do Not Contact and removed from all lead pools.');
+    banner('dnc-banner','ok','Done — '+data.addedToDncCount+' contact(s) added to Do Not Contact and removed from the leads pool.');
   }catch(e){banner('dnc-banner','err','Request failed — check your connection and try again.');}
-}
-/* ===================== LINKEDIN LEADS (passcode-gated) ===================== */
-// Only the original LinkedIn lead-list group gets this option at all — not
-// everyone on Allen Marie's team, and nobody else even sees the hub card.
-const LI_ALLOWED_NAMES=["Allen Marie","Irene","Dominic","Lorenz","Janrobin"];
-function isLiLeadsAllowed(name){return LI_ALLOWED_NAMES.indexOf(name)>-1;}
-const LI_PASSCODE_KEY="nsp_li_passcode";
-let liSel=null;
-function getLiPasscode(){try{return localStorage.getItem(LI_PASSCODE_KEY)||"";}catch(e){return "";}}
-function setLiPasscode(code){try{localStorage.setItem(LI_PASSCODE_KEY,code);}catch(e){}}
-buildNames("li-names",pickLiLeadsName);
-function liShowGateOrUnlocked(){
-  const unlocked=!!getLiPasscode();
-  document.getElementById("li-gate").style.display=unlocked?"none":"block";
-  document.getElementById("li-unlocked").style.display=unlocked?"block":"none";
-}
-async function checkLiPasscode(){
-  const code=v("li-passcode-input");
-  const statusEl=document.getElementById("li-gate-status");
-  if(!code.trim()){statusEl.textContent="Enter the passcode first.";return;}
-  statusEl.textContent="Checking…";
-  try{
-    const res=await fetch(SCRIPT_URL+"?action=checklipasscode&code="+encodeURIComponent(code)+"&t="+Date.now());
-    const data=await res.json();
-    if(!data.ok){statusEl.textContent="Incorrect passcode.";return;}
-    setLiPasscode(code);
-    document.getElementById("li-passcode-input").value="";
-    statusEl.textContent="";
-    liShowGateOrUnlocked();
-    const name=getHomeUser();
-    if(name)autoPickInContainer("li-names",name,pickLiLeadsName);
-  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
-}
-function pickLiLeadsName(name,btn){
-  liSel=name;
-  document.querySelectorAll("#li-names .name-chip").forEach(x=>x.classList.remove("selected"));
-  if(btn)btn.classList.add("selected");
-  document.getElementById("li-person").textContent=name+" — "+ALL.find(x=>x.name===name).team;
-  document.getElementById("li-names").style.display="none";
-  document.getElementById("li-panel").style.display="block";
-  document.getElementById("li-claim-status").textContent="";
-  document.getElementById("li-claim-result").innerHTML="";
-  document.getElementById("li-remove-status").textContent="";
-  document.getElementById("li-remove-input").value="";
-  document.getElementById("li-remove-reason").value="";
-  loadLeadsRemaining("linkedin","li-pool-note");
-}
-function backLiLeads(){document.getElementById("li-panel").style.display="none";document.getElementById("li-names").style.display="block";liSel=null;}
-async function claimLiLeads(){
-  if(!liSel)return;
-  const count=v("li-count");
-  const statusEl=document.getElementById("li-claim-status");
-  const resultEl=document.getElementById("li-claim-result");
-  const btn=document.getElementById("li-claim-btn");
-  statusEl.textContent="Claiming leads…";resultEl.innerHTML="";
-  btn.disabled=true;
-  try{
-    const fd=new FormData();fd.append("type","claimlinkedinleads");
-    fd.append("data",JSON.stringify({name:liSel,count:count,passcode:getLiPasscode()}));
-    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
-    const data=await res.json();
-    if(!data.success){statusEl.textContent="Error: "+data.error;if((data.error||"").indexOf("passcode")>-1){setLiPasscode("");liShowGateOrUnlocked();}return;}
-    if(data.repeat){
-      statusEl.innerHTML='⚠ You already claimed these '+data.count+' lead(s) about '+(data.claimedAgo!=null?data.claimedAgo:"a few")+' min ago — here they are again so nothing gets missed. (Claim again later for a fresh batch.)';
-    }else{
-      statusEl.textContent="Claimed "+data.count+" lead(s).";
-    }
-    if(data.count>0){
-      const joined=data.leads.join("\n");
-      resultEl.innerHTML='<div style="margin:10px 0;">'+
-        '<label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">Click the box below, then Copy — then paste straight into a column in your Google Sheet.</label>'+
-        '<textarea id="li-leads-textarea" readonly onclick="this.select()" style="width:100%;min-height:160px;background:var(--navy);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);resize:vertical;">'+escapeHtml(joined)+'</textarea>'+
-        '<div class="row" style="margin-top:8px;">'+
-        '<button class="btn-primary" onclick="copyLiLeadsToClipboard()">Copy to clipboard</button>'+
-        '<span id="li-copy-status" style="font-size:12px;color:var(--green);"></span>'+
-        '</div></div>'+
-        '<table><thead><tr><th>#</th><th>Email</th></tr></thead><tbody>'+
-        data.leads.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(e)+'</td></tr>').join("")+
-        '</tbody></table>';
-    }
-    loadLeadsRemaining("linkedin","li-pool-note");
-  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
-  finally{btn.disabled=false;}
-}
-async function copyLiLeadsToClipboard(){
-  const ta=document.getElementById("li-leads-textarea");
-  const statusEl=document.getElementById("li-copy-status");
-  if(!ta)return;
-  try{
-    await navigator.clipboard.writeText(ta.value);
-    statusEl.textContent="Copied!";
-  }catch(e){
-    ta.select();
-    try{document.execCommand("copy");statusEl.textContent="Copied!";}
-    catch(e2){statusEl.textContent="Couldn't copy — select the text manually.";}
-  }
-  setTimeout(()=>{statusEl.textContent="";},2000);
-}
-async function removeLiLeadsUI(){
-  const input=v("li-remove-input");
-  const statusEl=document.getElementById("li-remove-status");
-  if(!input.trim()){statusEl.textContent="Paste at least one email or domain first.";return;}
-  statusEl.textContent="Removing…";
-  try{
-    const fd=new FormData();fd.append("type","removelinkedinleads");
-    fd.append("data",JSON.stringify({input:input,name:liSel||"Unknown",reason:v("li-remove-reason"),passcode:getLiPasscode()}));
-    const res=await fetch(SCRIPT_URL,{method:"POST",body:fd});
-    const data=await res.json();
-    if(!data.success){statusEl.textContent="Error: "+data.error;if((data.error||"").indexOf("passcode")>-1){setLiPasscode("");liShowGateOrUnlocked();}return;}
-    statusEl.textContent=data.addedToDncCount+" added to Do Not Contact ("+data.removedFromLiLeadsCount+" matched an active LinkedIn lead and was marked removed, "+(data.removedFromLeadsCount||0)+" matched in the regular Leads list).";
-    document.getElementById("li-remove-input").value="";
-    document.getElementById("li-remove-reason").value="";
-  }catch(e){statusEl.textContent="Request failed — check your connection and try again.";}
 }
 /* ===================== HOME HUB ===================== */
 const HOME_KEY="nsp_home_user";
@@ -1779,8 +1629,11 @@ function getHomeUser(){try{return localStorage.getItem(HOME_KEY)||"";}catch(e){r
 function setHomeUserName(name){try{localStorage.setItem(HOME_KEY,name);}catch(e){}}
 function clearHomeUserName(){try{localStorage.removeItem(HOME_KEY);}catch(e){}}
 buildNames("home-picker",pickHomeUser);
+// Auto-unlock on page load if name is already stored from a previous session
+autoUnlockAdmin();
 function pickHomeUser(name){
   setHomeUserName(name);
+  autoUnlockAdmin();
   renderHomeHub();
 }
 function switchHomeUser(){
@@ -1799,11 +1652,9 @@ function renderHomeHub(){
     document.getElementById("hg-team").textContent=info?info.team:"";
     picker.style.display="none";hub.style.display="block";
     if(teamPanel)teamPanel.style.display="none";
-    const liAllowed=isLiLeadsAllowed(name);
-    document.getElementById("hub-li-leads").style.display=liAllowed?"":"none";
-    document.getElementById("hub-leads").style.display=liAllowed?"none":"";
-    // Allen Marie's team also logs bookings on behalf of Saul — show their
-    // entry point to the Log a Booking view (the #v-booking flow already works).
+    // Saul's Team (Allen + Janrobin) also logs bookings on behalf of Saul —
+    // show their entry point to the Log a Booking view (the #v-booking flow
+    // already works).
     document.getElementById("hub-saul").style.display=canLogForSaul(name)?"":"none";
     sub.textContent="Jump straight into what you need — your name carries over automatically.";
     loadHomeStatsIfNeeded();
@@ -1837,13 +1688,11 @@ function autoPickInContainer(containerId,name,fn){
 }
 function goHome(view){
   const name=getHomeUser();
-  if(view==="li-leads"&&!isLiLeadsAllowed(name))return;
   sv(view,document.getElementById('tab-'+view));
   if(!name)return;
   if(view==="eod")autoPickInContainer("eod-names",name,pickEodName);
   if(view==="booking")autoPickInContainer("bk-names",name,pickBkName);
   if(view==="leads")autoPickInContainer("leads-names",name,pickLeadsName);
-  if(view==="li-leads"){liShowGateOrUnlocked();if(getLiPasscode())autoPickInContainer("li-names",name,pickLiLeadsName);}
   if(view==="dnc"){document.getElementById('dnc-input').value='';document.getElementById('dnc-reason').value='';document.getElementById('dnc-banner').className='banner';document.getElementById('dnc-banner').textContent='';}
   if(view==="booked-leads"){blDateISO=nyTodayISO();}
   if(view==="attendance"){
@@ -1895,10 +1744,8 @@ function blPopulateUserSelect(){
   if(!sel) return;
   const cur = getHomeUser() || "";
   let opts = '<option value="">— Select your name —</option>';
-  STRUCTURE.forEach(g => {
-    g.members.forEach(name => {
-      opts += '<option value="' + escapeHtml(name) + '"' + (name === cur ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
-    });
+  ASSOCIATES.forEach(name => {
+    opts += '<option value="' + escapeHtml(name) + '"' + (name === cur ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
   });
   sel.innerHTML = opts;
 }
@@ -1909,18 +1756,17 @@ function blSetUser(name){
 }
 function blSetupClaimAs(){
   const myName = getHomeUser() || "";
-  const isSenior = SENIORS.includes(myName);
+  // Claim-on-behalf is an admin capability — Allen and Sheena only.
+  const isSenior = ADMIN_NAMES.includes(myName);
   const bar = document.getElementById("bl-claim-as-bar");
   const sel = document.getElementById("bl-claim-as");
   if(!bar || !sel) return;
   if(isSenior){
     bar.style.display = "block";
-    // Build options: self first, then every team member
+    // Build options: self first, then every other associate
     let opts = '<option value="' + escapeHtml(myName) + '">' + escapeHtml(myName) + '</option>';
-    STRUCTURE.forEach(g => {
-      g.members.forEach(name => {
-        if(name !== myName) opts += '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>';
-      });
+    ASSOCIATES.forEach(name => {
+      if(name !== myName) opts += '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>';
     });
     // Only re-populate if options changed (avoids resetting selection on render)
     if(sel.innerHTML !== opts) sel.innerHTML = opts;
@@ -2278,10 +2124,10 @@ function sv(id,btn){
   document.querySelectorAll(".nav-tab").forEach(x=>x.classList.remove("active"));
   document.getElementById("v-"+id).classList.add("active");if(btn)btn.classList.add("active");
   if(id==="leaderboard")loadLeaderboard();
-  if(id==="admin")loadAdmin();
+  if(id==="admin"){autoUnlockAdmin();loadAdmin();}
   if(id==="attendance"){attSetToday();loadRollCall();}
   if(id==="docs")loadDocs();
-  if(id==="booked-leads"){blDateISO=nyTodayISO();loadBookedLeads();}
+  if(id==="booked-leads"){autoUnlockAdmin();blDateISO=nyTodayISO();loadBookedLeads();}
 }
 /* ===================== DOCS ===================== */
 let docsLoaded=false;
