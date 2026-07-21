@@ -499,6 +499,14 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
           <option>Van</option><option>Jesusa</option><option>Jasper</option>
           <option>Jade Rellora</option><option>Janrobin</option>
           <option>Pat</option><option>Mark</option>
+          <option>Charlot Inot Acoymo</option><option>Aiza Barrios</option>
+          <option>Lovely Nicosia Eralino</option><option>Carina Bringuela</option>
+          <option>Hervic Hercel Escobillo</option><option>James Vaughn Colina</option>
+          <option>Mylaine Filosopo</option><option>Irene Responde</option>
+          <option>Rona Villera</option><option>Ivony Durolfo</option>
+          <option>Lorenz Dan Maunto</option><option>Manuel Cuizon</option>
+          <option>Adrian Jade Lumontad</option><option>Rocy Villera</option>
+          <option>Associate 15</option>
         </select>
       </div>
       <div class="field">
@@ -787,7 +795,16 @@ const ADMIN_NAMES=["Allen","Sheena"];
 // Canonical flat list of all 10 associates — drives the Home/EOD/Booking/Leads
 // name grids and the Bookings-tab dropdowns. No team groupings, no stars —
 // every associate renders identically.
-const ASSOCIATES=["Allen","Mae","Sheena","Van","Jesusa","Jasper","Jade Rellora","Janrobin","Pat","Mark"];
+const ASSOCIATES=[
+  "Allen","Mae","Sheena","Van","Jesusa","Jasper",
+  "Jade Rellora","Janrobin","Pat","Mark",
+  "Charlot Inot Acoymo","Aiza Barrios","Lovely Nicosia Eralino",
+  "Carina Bringuela","Hervic Hercel Escobillo","James Vaughn Colina",
+  "Mylaine Filosopo","Irene Responde","Rona Villera","Ivony Durolfo",
+  "Lorenz Dan Maunto","Manuel Cuizon","Adrian Jade Lumontad",
+  "Rocy Villera",
+  "Associate 15"  // placeholder — replace when 15th name is confirmed
+];
 // STRUCTURE is kept ONLY as an internal lookup (Bookings col D, admin table
 // grouping, leaderboard table column). There are no team groupings any more —
 // the Home screen and name pickers render the flat ASSOCIATES list, and the
@@ -799,6 +816,13 @@ const STRUCTURE=[
  {team:"Josh", members:["Jasper"]},
  {team:"Saul", members:["Allen","Janrobin"]},
  {team:"Luke", members:["Van"]},
+ {team:"TBD",  members:[
+   "Charlot Inot Acoymo","Aiza Barrios","Lovely Nicosia Eralino",
+   "Carina Bringuela","Hervic Hercel Escobillo","James Vaughn Colina",
+   "Mylaine Filosopo","Irene Responde","Rona Villera","Ivony Durolfo",
+   "Lorenz Dan Maunto","Manuel Cuizon","Adrian Jade Lumontad",
+   "Rocy Villera","Associate 15"
+ ]},
 ];
 const ALL=[];STRUCTURE.forEach(g=>g.members.forEach(m=>ALL.push({name:m,team:g.team})));
 // Round Robin is now the main booking flow — every associate sends 80
@@ -1681,8 +1705,9 @@ function getHomeUser(){try{return localStorage.getItem(HOME_KEY)||"";}catch(e){r
 function setHomeUserName(name){try{localStorage.setItem(HOME_KEY,name);}catch(e){}}
 function clearHomeUserName(){try{localStorage.removeItem(HOME_KEY);}catch(e){}}
 buildNames("home-picker",pickHomeUser);
-// Auto-unlock on page load if name is already stored from a previous session
-autoUnlockAdmin();
+// Auto-unlock on page load — deferred so DOM is fully settled before any
+// admin DOM manipulation fires (fixes desktop click-miss on Allen/Sheena).
+requestAnimationFrame(()=>autoUnlockAdmin());
 function pickHomeUser(name){
   setHomeUserName(name);
   autoUnlockAdmin();
@@ -1940,12 +1965,11 @@ function blToggleAdmin(){
 function blApplyAdminUnlock(code){
   blAdminUnlocked = true;
   blAdminPinStored = code;
-  document.getElementById("bl-admin-gate").style.display = "none";
-  document.getElementById("bl-admin-tools").style.display = "block";
-  document.getElementById("bl-admin-lock-icon").textContent = "🔓";
-  const toggleBtn = document.getElementById("bl-admin-toggle-btn");
-  if(toggleBtn) toggleBtn.style.display = "flex";
-  document.getElementById("bl-lead-date").value = nyTodayISO();
+  const gateEl=document.getElementById("bl-admin-gate");if(gateEl)gateEl.style.display="none";
+  const toolsEl=document.getElementById("bl-admin-tools");if(toolsEl)toolsEl.style.display="block";
+  const lockIcon=document.getElementById("bl-admin-lock-icon");if(lockIcon)lockIcon.textContent="🔓";
+  const toggleBtn=document.getElementById("bl-admin-toggle-btn");if(toggleBtn)toggleBtn.style.display="flex";
+  const leadDate=document.getElementById("bl-lead-date");if(leadDate)leadDate.value=nyTodayISO();
   renderBlClaimsReview();
   blLoadTodayBookings();
 }
