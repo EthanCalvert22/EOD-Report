@@ -382,13 +382,18 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     <div id="eod-form">
       <div id="eod-already" style="display:none;background:rgba(246,173,85,0.12);border:1px solid rgba(246,173,85,0.4);color:var(--accent);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;">✓ You've already submitted today. You can adjust your numbers below and tap <b>Update my submission</b> — this replaces your earlier entry rather than adding a new one.</div>
       <div class="form-card"><h3 id="eod-person">—</h3>
-        <p style="font-size:13px;color:var(--text2);margin:-6px 0 14px;" id="eod-auto-note">📨 Your 80 initial outreaches are sent automatically each day — no email counts to report.</p>
         <div id="eod-senior-fields" style="display:none;">
           <div class="field-grid">
             <div class="field"><label>Round Robin outreaches</label><input type="number" id="e-rr" min="0" value="0"></div>
             <div class="field"><label>VP outreaches</label><input type="number" id="e-vp" min="0" value="0"></div>
           </div>
           <p style="font-size:12px;color:var(--text3);margin:6px 0 14px;">Total outreaches = RR + VP</p>
+        </div>
+        <div id="eod-nonsenior-fields" style="display:none;">
+          <div class="field-grid">
+            <div class="field"><label>Emails sent</label><input type="number" id="e-io" min="0" value="80"></div>
+          </div>
+          <p style="font-size:12px;color:var(--text3);margin:6px 0 14px;">Defaults to 80 (automated) — change it if today's count was different.</p>
         </div>
         <div class="field-grid">
           <div class="field"><label>Follow-ups sent</label><input type="number" id="e-fu" min="0" value="0"></div>
@@ -436,14 +441,17 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
   <p class="sub" style="margin:6px 0 14px;font-size:13px;">Tap your name, enter who booked, and the date it's booked for.</p>
   <div id="bk-names"></div>
   <div id="bk-form" style="display:none">
-    <div class="form-card"><h3 id="bk-person">—</h3>
-      <div class="field-grid">
-        <div class="field full"><label>Booker email *</label><input type="email" id="b-email" placeholder="name@company.com" oninput="checkDupe()"><div id="b-dupe" style="font-size:12px;color:var(--accent);margin-top:4px;display:none;">⚠ You've already logged this email.</div></div>
-        <div class="field"><label>Date booked for</label><input type="date" id="b-date"></div>
-        <div class="field"><label>Company / notes</label><input type="text" id="b-company" placeholder="optional"></div>
+    <div id="bk-plain-panel">
+      <div class="form-card"><h3 id="bk-person">—</h3>
+        <div class="field-grid">
+          <div class="field full"><label>Booker email *</label><input type="email" id="b-email" placeholder="name@company.com" oninput="checkDupe()"><div id="b-dupe" style="font-size:12px;color:var(--accent);margin-top:4px;display:none;">⚠ You've already logged this email.</div></div>
+          <div class="field"><label>Date booked for</label><input type="date" id="b-date"></div>
+          <div class="field"><label>Company / notes</label><input type="text" id="b-company" placeholder="optional"></div>
+        </div>
       </div>
+      <div class="row"><button class="btn-primary" onclick="submitBooking()">Log Booking</button></div>
     </div>
-    <div class="row"><button class="btn-primary" onclick="submitBooking()">Log Booking</button><button class="btn-secondary" onclick="backBk()">← Back</button></div>
+    <div class="row" style="margin-top:10px;"><button class="btn-secondary" onclick="backBk()">← Back</button></div>
     <div id="bk-vp-panel" style="display:none;margin-top:22px;">
       <div class="form-card" style="border-color:var(--accent);">
         <h3>Log a VP Booking</h3>
@@ -457,7 +465,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
     </div>
     <div id="bk-rr-panel" style="display:none;margin-top:22px;">
       <div class="form-card" style="border-color:var(--accent);">
-        <h3>Log a Round Robin booking</h3>
+        <h3 id="bk-rr-heading">Log a Round Robin booking</h3>
         <div class="field-grid">
           <div class="field full"><label>Booker email *</label><input type="email" id="b-rr-email" placeholder="name@company.com"></div>
           <div class="field"><label>Date booked for</label><input type="date" id="b-rr-date"></div>
@@ -835,6 +843,9 @@ function isRoundRobinEligible(name){return ALL.some(a=>a.name===name);}
 // day — they report the two counts separately on the EOD form. Everyone else
 // stays on the automated 80-IOs-per-day note with no count fields.
 const SENIOR_NAMES=["Allen","Mae","Sheena","Van","Jesusa","Jasper"];
+// Default automated email count for anyone who hasn't overridden it on the
+// EOD form that day — kept in sync with AUTO_IO_PER_ASSOCIATE in Code_FINAL.gs.
+const AUTO_IO_DEFAULT=80;
 // "Log a VP Booking": Allen and Janrobin can log capital-strategy bookings
 // that are credited to Ethan's Today-sheet row instead of their own.
 const VP_LOGGERS=["Allen","Janrobin"];
@@ -868,12 +879,14 @@ function pickEodName(name,btn){
   const cm=document.createElement("button");cm.className="opt-btn";cm.textContent="Leave EOD comment";cm.onclick=showComment;extra.appendChild(cm);
   ["e-fu"].forEach(id=>document.getElementById(id).value=0);
   document.getElementById("e-mtg-display").value=0;
-  // Seniors report their Round Robin + VP outreach counts; everyone else
-  // keeps the automated-80 note with no count fields.
+  // Seniors report their Round Robin + VP outreach counts separately;
+  // everyone else gets a single editable "Emails sent" field, defaulting to
+  // the automated 80 but changeable on days the count was different.
   const isSenior=SENIOR_NAMES.includes(name);
-  document.getElementById("eod-auto-note").style.display=isSenior?"none":"block";
   document.getElementById("eod-senior-fields").style.display=isSenior?"block":"none";
+  document.getElementById("eod-nonsenior-fields").style.display=isSenior?"none":"block";
   document.getElementById("e-rr").value=0;document.getElementById("e-vp").value=0;
+  document.getElementById("e-io").value=AUTO_IO_DEFAULT;
   document.getElementById("eod-already").style.display="none";
   document.getElementById("eod-submit-btn").textContent="Submit EOD";
   showEODForm();checkAlreadySubmitted(name);
@@ -889,6 +902,8 @@ function checkAlreadySubmitted(name){
        if(SENIOR_NAMES.includes(name)){
          document.getElementById("e-rr").value=mine.rrEmails||0;
          document.getElementById("e-vp").value=mine.vpEmails||0;
+       } else {
+         document.getElementById("e-io").value=(mine.rrEmails!=null?mine.rrEmails:AUTO_IO_DEFAULT);
        }
      }
    }).catch(()=>{});
@@ -904,12 +919,12 @@ async function submitEOD(){
  const btn=document.getElementById("eod-submit-btn");
  btn.disabled=true;
  try{
-   // Seniors report Round Robin + VP outreach counts (stored in Form
-   // Responses cols D and F). Non-seniors send the fixed automated total
-   // (rrEmails:80, vpEmails:0 — see AUTO_IO_PER_ASSOCIATE in Code_FINAL.gs).
-   // Zeros are still sent for the legacy email keys so nothing downstream breaks.
+   // Seniors report Round Robin + VP outreach counts separately (stored in
+   // Form Responses cols D and F). Everyone else reports a single editable
+   // "Emails sent" count (defaults to 80, but can be changed on days the
+   // automated total was different) — stored the same way in col D.
    const isSenior=SENIOR_NAMES.includes(eodSel);
-   const rrEmails=isSenior?(+v("e-rr")||0):80;
+   const rrEmails=isSenior?(+v("e-rr")||0):(+v("e-io")||AUTO_IO_DEFAULT);
    const vpEmails=isSenior?(+v("e-vp")||0):0;
    const fd=new FormData();fd.append("type","eod");
    fd.append("data",JSON.stringify({name:eodSel,rrEmails:rrEmails,vpEmails:vpEmails,gmailEmails:0,gmailViews:0,outlookEmails:0,outlookViews:0,meetings:0,followups:+v("e-fu")}));
@@ -940,8 +955,9 @@ async function submitComment(){
    // the form fields (which reset to 0 on name pick) would overwrite them with zeros.
    if(!eodAlready){
      const isSeniorC=SENIOR_NAMES.includes(eodSel);
+     const rrEmailsC=isSeniorC?(+v("e-rr")||0):(+v("e-io")||AUTO_IO_DEFAULT);
      const eodFd=new FormData();eodFd.append("type","eod");
-     eodFd.append("data",JSON.stringify({name:eodSel,rrEmails:isSeniorC?(+v("e-rr")||0):80,vpEmails:isSeniorC?(+v("e-vp")||0):0,gmailEmails:0,gmailViews:0,outlookEmails:0,outlookViews:0,meetings:0,followups:+v("e-fu")}));
+     eodFd.append("data",JSON.stringify({name:eodSel,rrEmails:rrEmailsC,vpEmails:isSeniorC?(+v("e-vp")||0):0,gmailEmails:0,gmailViews:0,outlookEmails:0,outlookViews:0,meetings:0,followups:+v("e-fu")}));
      const eodRes=await fetch(SCRIPT_URL,{method:"POST",body:eodFd});
      const eodData=await eodRes.json();
      if(!postOk(eodData)){banner("eod-banner","err","EOD submission failed — please try again.");return;}
@@ -1065,14 +1081,28 @@ function pickBkName(name,btn){
   document.getElementById("b-date").value=nyTodayISO();
   document.getElementById("b-email").value="";document.getElementById("b-company").value="";
   document.getElementById("b-dupe").style.display="none";
+  // Associates without a VP assigned yet (team "TBD" — the newest additions
+  // to the roster) have no personal VP line in the EOD Report, so their plain
+  // "Log a Booking" form is hidden entirely and they log exclusively through
+  // the Round Robin panel below — that way every meeting they book still
+  // lands somewhere visible on the report instead of being silently dropped
+  // into an unreported bucket. Once Ethan assigns them a real VP, update
+  // their entry in STRUCTURE/SENIOR_STRUCTURE_v3 and this reverts automatically.
+  const personInfo=ALL.find(a=>a.name===name);
+  const hasVP=!!(personInfo&&personInfo.team&&personInfo.team!=="TBD");
+  document.getElementById("bk-plain-panel").style.display=hasVP?"block":"none";
   // VP booking panel — Allen + Janrobin log capital-strategy bookings that
   // credit Ethan's Today-sheet row, see submitBookingForVP().
   document.getElementById("bk-vp-panel").style.display=canLogForVP(name)?"block":"none";
   document.getElementById("b-vp-email").value="";document.getElementById("b-vp-company").value="";
   document.getElementById("b-vp-date").value=nyTodayISO();
   // Any associate can log a booking on behalf of the pooled Round Robin total
-  // (see isRoundRobinEligible()).
-  document.getElementById("bk-rr-panel").style.display=isRoundRobinEligible(name)?"block":"none";
+  // (see isRoundRobinEligible()). It's the ONLY booking option for TBD-team
+  // associates, so relabel it plainly for them.
+  const rrPanel=document.getElementById("bk-rr-panel");
+  rrPanel.style.display=isRoundRobinEligible(name)?"block":"none";
+  const rrHeading=document.getElementById("bk-rr-heading");
+  if(rrHeading)rrHeading.textContent=hasVP?"Log a Round Robin booking":"Log a Booking";
   document.getElementById("b-rr-email").value="";document.getElementById("b-rr-company").value="";
   document.getElementById("b-rr-date").value=nyTodayISO();
   loadMyBookings(name);
