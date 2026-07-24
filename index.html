@@ -592,7 +592,7 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
       <div id="ad-content" style="display:none">
         <div class="metrics">
           <div class="metric acc"><div class="l">Total Outreaches</div><div class="v" id="ad-emails">0</div></div>
-          <div class="metric grn"><div class="l">Meetings (EOD)</div><div class="v" id="ad-mtg">0</div></div>
+          <div class="metric grn"><div class="l">Total Meetings</div><div class="v" id="ad-mtg">0</div><div class="l" id="ad-mtg-sub" style="margin-top:2px;font-size:10px;"></div></div>
           <div class="metric"><div class="l">Follow-ups</div><div class="v" id="ad-fu">0</div></div>
           <div class="metric"><div class="l">Submitted</div><div class="v" id="ad-sub">0</div></div>
         </div>
@@ -1565,6 +1565,13 @@ async function deleteLeaveEntry(encName, encDate){
 function renderAdmin(data){
  const rows=(data&&data.eod)?data.eod:(Array.isArray(data)?data:[]);
  const map={};rows.forEach(r=>{map[r.name]=r;});
+ // Round Robin pool bookings (col H="Yes") aren't credited to any
+ // individual, so they never show up in the per-associate rows below. Under
+ // the "only 6 named seniors get personal VP credit" policy, almost every
+ // meeting lands in this pool — folding it into the headline total (and
+ // giving it its own row) keeps "Total Meetings" from misleadingly reading
+ // near-zero on a normal day.
+ const rrMeetings=(data&&typeof data.roundRobinMeetings==="number")?data.roundRobinMeetings:0;
  let te=0,tm=0,tf=0,ts=0;
  const body=document.getElementById("ad-body");body.innerHTML="";
  STRUCTURE.forEach(g=>{
@@ -1579,8 +1586,18 @@ function renderAdmin(data){
   });
   if(gs>0){const sr=document.createElement("tr");sr.className="sub-row";sr.innerHTML='<td colspan="2">'+g.team+' subtotal</td><td>'+ge+'</td><td>'+gm+'</td><td>'+gf+'</td><td>'+gs+'/'+g.members.length+'</td>';body.appendChild(sr);}
  });
+ if(rrMeetings>0){
+  const rrRow=document.createElement("tr");rrRow.className="group-row";rrRow.innerHTML='<td colspan="6">Round Robin Pool</td>';body.appendChild(rrRow);
+  const rrDataRow=document.createElement("tr");
+  rrDataRow.innerHTML='<td class="nm">Round Robin Email Leads</td><td>—</td><td>—</td><td>'+rrMeetings+'</td><td>—</td><td>—</td>';
+  body.appendChild(rrDataRow);
+ }
+ const personalMeetings=tm;
+ tm+=rrMeetings;
  const tr=document.createElement("tr");tr.className="total-row";tr.innerHTML='<td colspan="2">Grand Total</td><td>'+te+'</td><td>'+tm+'</td><td>'+tf+'</td><td>'+ts+'/'+ALL.length+'</td>';body.appendChild(tr);
  document.getElementById("ad-emails").textContent=te;document.getElementById("ad-mtg").textContent=tm;
+ const mtgSub=document.getElementById("ad-mtg-sub");
+ if(mtgSub)mtgSub.textContent=personalMeetings+" personal + "+rrMeetings+" round robin";
  document.getElementById("ad-fu").textContent=tf;document.getElementById("ad-sub").textContent=ts+"/"+ALL.length;
  document.getElementById("ad-loading").style.display="none";document.getElementById("ad-content").style.display="block";
  document.getElementById("ad-table-wrap").style.display="block";
