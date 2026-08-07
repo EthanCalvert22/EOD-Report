@@ -391,9 +391,9 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
         </div>
         <div id="eod-nonsenior-fields" style="display:none;">
           <div class="field-grid">
-            <div class="field"><label>Emails sent</label><input type="number" id="e-io" min="0" value="80"></div>
+            <div class="field"><label>Emails sent</label><input type="number" id="e-io" min="0" placeholder="e.g. 65"></div>
           </div>
-          <p style="font-size:12px;color:var(--text3);margin:6px 0 14px;">Defaults to 80 (automated) — change it if today's count was different.</p>
+          <p style="font-size:12px;color:var(--text3);margin:6px 0 14px;">Enter today's real count — there's no default, since it varies day to day.</p>
         </div>
         <div class="field-grid">
           <div class="field"><label>Follow-ups sent</label><input type="number" id="e-fu" min="0" value="0"></div>
@@ -811,7 +811,13 @@ const ASSOCIATES=[
   "Mylaine Filosopo","Irene Responde","Rona Villera","Ivony Durolfo",
   "Lorenz Maunto","Manuel Cuizon","Adrian Lumontad",
   "Rocy Villera",
-  "Jonnie Dango"
+  "Jonnie Dango",
+  "Aaliyah Marial","Jonathan Lauron","Anna Dayon","Edgar Ba","Jan Gador",
+  "Ainne Ymbong","Dairine Omega","Michelle Cabilan","Cristopher Cuizon",
+  "Hiroshi Goto","Vivien Mendaño","Francis","Clarence Barbarona",
+  "John Chua","Joshua Ramos","Maybelyn Cabatana","Irene Hidalgo",
+  "Joel Carredo","Jethro Dayaganon","Karlouie Cuevas","Ofelia Gica",
+  "Phillip Abella","Myrna Guinto","Dey Quiño","Romer Cobacha"
 ];
 // STRUCTURE is kept ONLY as an internal lookup (Bookings col D, admin table
 // grouping, leaderboard table column). There are no team groupings any more —
@@ -829,23 +835,27 @@ const STRUCTURE=[
    "Carina Bringuela","Hervic Escobillo","James Colina",
    "Mylaine Filosopo","Irene Responde","Rona Villera","Ivony Durolfo",
    "Lorenz Maunto","Manuel Cuizon","Adrian Lumontad",
-   "Rocy Villera","Jonnie Dango"
+   "Rocy Villera","Jonnie Dango",
+   "Aaliyah Marial","Jonathan Lauron","Anna Dayon","Edgar Ba","Jan Gador",
+   "Ainne Ymbong","Dairine Omega","Michelle Cabilan","Cristopher Cuizon",
+   "Hiroshi Goto","Vivien Mendaño","Francis","Clarence Barbarona",
+   "John Chua","Joshua Ramos","Maybelyn Cabatana","Irene Hidalgo",
+   "Joel Carredo","Jethro Dayaganon","Karlouie Cuevas","Ofelia Gica",
+   "Phillip Abella","Myrna Guinto","Dey Quiño","Romer Cobacha"
  ]},
 ];
 const ALL=[];STRUCTURE.forEach(g=>g.members.forEach(m=>ALL.push({name:m,team:g.team})));
-// Round Robin is now the main booking flow — every associate sends 80
-// automated IOs and works the round robin link, so any of the 10 can flag a
-// specific booking as a pooled Round Robin booking (see
-// submitBookingForRoundRobin). It's added straight into the EOD Report's
-// pooled Round Robin total without crediting any individual's personal row.
+// Round Robin is the main booking flow — every associate works the round
+// robin link, so any of them can flag a specific booking as a pooled Round
+// Robin booking (see submitBookingForRoundRobin). It's added straight into
+// the EOD Report's pooled Round Robin total without crediting any
+// individual's personal row.
 function isRoundRobinEligible(name){return ALL.some(a=>a.name===name);}
 // Seniors send BOTH Round Robin emails AND VP/capital-strategy emails each
 // day — they report the two counts separately on the EOD form. Everyone else
-// stays on the automated 80-IOs-per-day note with no count fields.
+// self-reports a single "Emails sent" number with no default — it genuinely
+// varies day to day.
 const SENIOR_NAMES=["Allen","Mae","Sheena","Van","Jesusa","Jasper"];
-// Default automated email count for anyone who hasn't overridden it on the
-// EOD form that day — kept in sync with AUTO_IO_PER_ASSOCIATE in Code_FINAL.gs.
-const AUTO_IO_DEFAULT=80;
 // "Log a VP Booking": Allen and Janrobin can log capital-strategy bookings
 // that are credited to Ethan's Today-sheet row instead of their own.
 const VP_LOGGERS=["Allen","Janrobin"];
@@ -880,13 +890,13 @@ function pickEodName(name,btn){
   ["e-fu"].forEach(id=>document.getElementById(id).value=0);
   document.getElementById("e-mtg-display").value=0;
   // Seniors report their Round Robin + VP outreach counts separately;
-  // everyone else gets a single editable "Emails sent" field, defaulting to
-  // the automated 80 but changeable on days the count was different.
+  // everyone else gets a single editable "Emails sent" field with no default —
+  // they type in whatever their real count was today.
   const isSenior=SENIOR_NAMES.includes(name);
   document.getElementById("eod-senior-fields").style.display=isSenior?"block":"none";
   document.getElementById("eod-nonsenior-fields").style.display=isSenior?"none":"block";
   document.getElementById("e-rr").value=0;document.getElementById("e-vp").value=0;
-  document.getElementById("e-io").value=AUTO_IO_DEFAULT;
+  document.getElementById("e-io").value="";
   document.getElementById("eod-already").style.display="none";
   document.getElementById("eod-submit-btn").textContent="Submit EOD";
   showEODForm();checkAlreadySubmitted(name);
@@ -903,7 +913,7 @@ function checkAlreadySubmitted(name){
          document.getElementById("e-rr").value=mine.rrEmails||0;
          document.getElementById("e-vp").value=mine.vpEmails||0;
        } else {
-         document.getElementById("e-io").value=(mine.rrEmails!=null?mine.rrEmails:AUTO_IO_DEFAULT);
+         document.getElementById("e-io").value=(mine.rrEmails!=null?mine.rrEmails:"");
        }
      }
    }).catch(()=>{});
@@ -916,15 +926,19 @@ function backEOD(){document.getElementById("eod-panel").style.display="none";doc
 function postOk(data){return !!(data&&(data.status==="ok"||data.success===true));}
 async function submitEOD(){
  if(!eodSel)return;
+ // Non-seniors must type their real "Emails sent" count — there's no
+ // fallback default, since the number genuinely varies day to day.
+ const isSeniorChk=SENIOR_NAMES.includes(eodSel);
+ if(!isSeniorChk&&v("e-io").trim()===""){banner("eod-banner","err","Please enter how many emails you sent today.");return;}
  const btn=document.getElementById("eod-submit-btn");
  btn.disabled=true;
  try{
    // Seniors report Round Robin + VP outreach counts separately (stored in
    // Form Responses cols D and F). Everyone else reports a single editable
-   // "Emails sent" count (defaults to 80, but can be changed on days the
-   // automated total was different) — stored the same way in col D.
+   // "Emails sent" count, self-typed each day with no assumed default —
+   // stored the same way in col D.
    const isSenior=SENIOR_NAMES.includes(eodSel);
-   const rrEmails=isSenior?(+v("e-rr")||0):(+v("e-io")||AUTO_IO_DEFAULT);
+   const rrEmails=isSenior?(+v("e-rr")||0):(+v("e-io")||0);
    const vpEmails=isSenior?(+v("e-vp")||0):0;
    const fd=new FormData();fd.append("type","eod");
    fd.append("data",JSON.stringify({name:eodSel,rrEmails:rrEmails,vpEmails:vpEmails,gmailEmails:0,gmailViews:0,outlookEmails:0,outlookViews:0,meetings:0,followups:+v("e-fu")}));
@@ -955,7 +969,8 @@ async function submitComment(){
    // the form fields (which reset to 0 on name pick) would overwrite them with zeros.
    if(!eodAlready){
      const isSeniorC=SENIOR_NAMES.includes(eodSel);
-     const rrEmailsC=isSeniorC?(+v("e-rr")||0):(+v("e-io")||AUTO_IO_DEFAULT);
+     if(!isSeniorC&&v("e-io").trim()===""){banner("eod-banner","err","Please enter how many emails you sent today.");return;}
+     const rrEmailsC=isSeniorC?(+v("e-rr")||0):(+v("e-io")||0);
      const eodFd=new FormData();eodFd.append("type","eod");
      eodFd.append("data",JSON.stringify({name:eodSel,rrEmails:rrEmailsC,vpEmails:isSeniorC?(+v("e-vp")||0):0,gmailEmails:0,gmailViews:0,outlookEmails:0,outlookViews:0,meetings:0,followups:+v("e-fu")}));
      const eodRes=await fetch(SCRIPT_URL,{method:"POST",body:eodFd});
