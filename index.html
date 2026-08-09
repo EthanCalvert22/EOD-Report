@@ -503,18 +503,6 @@ td.nm{color:var(--text);font-family:var(--sans);font-weight:500;}
         <label>Your name</label>
         <select id="attName" onchange="onAttNameOrDateChange()">
           <option value="">— Select your name —</option>
-          <option>Allen</option><option>Mae</option><option>Sheena</option>
-          <option>Van</option><option>Jesusa</option><option>Jasper</option>
-          <option>Jade Rellora</option><option>Janrobin</option>
-          <option>Pat</option><option>Mark</option>
-          <option>Charlot Acoymo</option><option>Aiza Barrios</option>
-          <option>Lovely Eralino</option><option>Carina Bringuela</option>
-          <option>Hervic Escobillo</option><option>James Colina</option>
-          <option>Mylaine Filosopo</option><option>Irene Responde</option>
-          <option>Rona Villera</option><option>Ivony Durolfo</option>
-          <option>Lorenz Maunto</option><option>Manuel Cuizon</option>
-          <option>Adrian Lumontad</option><option>Rocy Villera</option>
-          <option>Jonnie Dango</option>
         </select>
       </div>
       <div class="field">
@@ -808,7 +796,7 @@ const ASSOCIATES=[
   "Jade Rellora","Janrobin","Pat","Mark",
   "Charlot Acoymo","Aiza Barrios","Lovely Eralino",
   "Carina Bringuela","Hervic Escobillo","James Colina",
-  "Mylaine Filosopo","Irene Responde","Rona Villera","Ivony Durolfo",
+  "Mylaine Filosopo","New Hire (TBD)","Rona Villera","Ivony Durolfo",
   "Lorenz Maunto","Manuel Cuizon","Adrian Lumontad",
   "Rocy Villera",
   "Jonnie Dango",
@@ -833,7 +821,7 @@ const STRUCTURE=[
  {team:"TBD",  members:[
    "Charlot Acoymo","Aiza Barrios","Lovely Eralino",
    "Carina Bringuela","Hervic Escobillo","James Colina",
-   "Mylaine Filosopo","Irene Responde","Rona Villera","Ivony Durolfo",
+   "Mylaine Filosopo","New Hire (TBD)","Rona Villera","Ivony Durolfo",
    "Lorenz Maunto","Manuel Cuizon","Adrian Lumontad",
    "Rocy Villera","Jonnie Dango",
    "Aaliyah Marial","Jonathan Lauron","Anna Dayon","Edgar Ba","Jan Gador",
@@ -872,6 +860,14 @@ function buildNames(containerId,onPick){
  ASSOCIATES.forEach(name=>{const b=document.createElement("button");b.className="name-chip";b.textContent=name;b.onclick=()=>onPick(name,b);grid.appendChild(b);});
  c.appendChild(grid);
 }
+// Attendance name dropdown — built from ASSOCIATES so every associate always
+// has a way to log attendance, with no separate hardcoded list to fall out
+// of sync when the team changes.
+(function populateAttNames(){
+  const sel=document.getElementById("attName");
+  if(!sel)return;
+  ASSOCIATES.forEach(name=>{const o=document.createElement("option");o.textContent=name;sel.appendChild(o);});
+})();
 /* ===================== EOD ===================== */
 let eodSel=null,eodAlready=false;
 buildNames("eod-names",pickEodName);
